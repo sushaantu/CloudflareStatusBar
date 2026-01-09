@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import AppKit
 
 @MainActor
 class CloudflareViewModel: ObservableObject {
@@ -63,6 +64,9 @@ class CloudflareViewModel: ObservableObject {
             }
 
             state.account = account
+
+            // Update notification service with accountId for deep links
+            NotificationService.shared.accountId = account.id
 
             // Fetch all resources in parallel
             async let workersTask = api.getWorkers(accountId: account.id)

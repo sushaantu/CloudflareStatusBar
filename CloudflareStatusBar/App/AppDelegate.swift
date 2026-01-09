@@ -21,10 +21,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         popover = NSPopover()
         popover.contentSize = NSSize(width: 360, height: 480)
         popover.behavior = .transient
+        popover.animates = true
         popover.contentViewController = NSHostingController(rootView: MenuBarView(viewModel: viewModel))
 
         NotificationService.shared.requestPermission()
-
         viewModel.startAutoRefresh()
     }
 
@@ -35,7 +35,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             popover.performClose(nil)
         } else {
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
-            popover.contentViewController?.view.window?.makeKey()
+            NSApp.activate(ignoringOtherApps: true)
         }
     }
 

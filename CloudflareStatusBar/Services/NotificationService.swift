@@ -1,14 +1,41 @@
 import Foundation
 import UserNotifications
+import AppKit
 
 class NotificationService: NSObject {
     static let shared = NotificationService()
 
     private let center = UNUserNotificationCenter.current()
+    var accountId: String?
 
     private override init() {
         super.init()
         center.delegate = self
+        setupNotificationCategories()
+    }
+
+    private func setupNotificationCategories() {
+        let openAction = UNNotificationAction(
+            identifier: "OPEN_DASHBOARD",
+            title: "Open Dashboard",
+            options: [.foreground]
+        )
+
+        let deploymentCategory = UNNotificationCategory(
+            identifier: "DEPLOYMENT",
+            actions: [openAction],
+            intentIdentifiers: [],
+            options: []
+        )
+
+        let workerCategory = UNNotificationCategory(
+            identifier: "WORKER",
+            actions: [openAction],
+            intentIdentifiers: [],
+            options: []
+        )
+
+        center.setNotificationCategories([deploymentCategory, workerCategory])
     }
 
     func requestPermission() {
@@ -53,6 +80,7 @@ class NotificationService: NSObject {
         }
 
         content.categoryIdentifier = "DEPLOYMENT"
+        content.userInfo = ["projectName": projectName, "type": "pages"]
 
         let request = UNNotificationRequest(
             identifier: UUID().uuidString,
@@ -73,6 +101,7 @@ class NotificationService: NSObject {
         content.body = "\(workerName): \(event)"
         content.sound = .default
         content.categoryIdentifier = "WORKER"
+        content.userInfo = ["workerName": workerName, "type": "worker"]
 
         let request = UNNotificationRequest(
             identifier: UUID().uuidString,
@@ -98,7 +127,24 @@ extension NotificationService: UNUserNotificationCenterDelegate {
         didReceive response: UNNotificationResponse,
         withCompletionHandler completionHandler: @escaping () -> Void
     ) {
-        // Handle notification tap - could open Cloudflare dashboard
+        let userInfo = response.notification.request.content.userInfo
+        let type = userInfo["type"] as? String
+
+        // Open dashboard when notification is tapped or action is clicked
+        if let accountId = accountId {
+            var urlString: String?
+
+            if type == "pages", let projectName = userInfo["projectName"] as? String {
+                urlString = "https://dash.cloudflare.com/\(accountId)/pages/view/\(projectName)"
+            } else if type == "worker", let workerName = userInfo["workerName"] as? String {
+                urlString = "https://dash.cloudflare.com/\(accountId)/workers/services/view/\(workerName)/production"
+            }
+
+            if let urlString = urlString, let url = URL(string: urlString) {
+                NSWorkspace.shared.open(url)
+            }
+        }
+
         completionHandler()
     }
 }

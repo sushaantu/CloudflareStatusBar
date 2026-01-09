@@ -42,17 +42,24 @@ struct CloudflareError: Decodable {
 }
 
 struct ResultInfo: Decodable {
-    let page: Int
-    let perPage: Int
-    let totalCount: Int
-    let totalPages: Int
+    let page: Int?
+    let perPage: Int?
+    let totalCount: Int?
+    let totalPages: Int?
+    let count: Int?
 
     enum CodingKeys: String, CodingKey {
         case page
         case perPage = "per_page"
         case totalCount = "total_count"
         case totalPages = "total_pages"
+        case count
     }
+}
+
+// R2 has a nested response structure
+struct R2BucketsResponse: Decodable {
+    let buckets: [R2Bucket]
 }
 
 class CloudflareAPIClient {
@@ -158,7 +165,8 @@ class CloudflareAPIClient {
     // MARK: - R2 Buckets
 
     func getR2Buckets(accountId: String) async throws -> [R2Bucket] {
-        try await makeRequest(endpoint: "/accounts/\(accountId)/r2/buckets")
+        let response: R2BucketsResponse = try await makeRequest(endpoint: "/accounts/\(accountId)/r2/buckets")
+        return response.buckets
     }
 
     // MARK: - D1 Databases

@@ -29,6 +29,7 @@ class WranglerAuthService {
 
         // Try multiple possible locations for wrangler config
         let possiblePaths = [
+            homeDir.appendingPathComponent("Library/Preferences/.wrangler/config/default.toml"),
             homeDir.appendingPathComponent(".wrangler/config/default.toml"),
             homeDir.appendingPathComponent(".config/.wrangler/config/default.toml"),
             homeDir.appendingPathComponent(".config/wrangler/config/default.toml"),

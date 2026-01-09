@@ -1,10 +1,12 @@
 import SwiftUI
+import AppKit
 
 struct StorageView: View {
     let kvNamespaces: [KVNamespace]
     let r2Buckets: [R2Bucket]
     let d1Databases: [D1Database]
     let queues: [Queue]
+    let accountId: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -16,7 +18,7 @@ struct StorageView: View {
                 count: kvNamespaces.count
             ) {
                 ForEach(kvNamespaces) { namespace in
-                    KVNamespaceRow(namespace: namespace)
+                    KVNamespaceRow(namespace: namespace, accountId: accountId)
                 }
             }
 
@@ -28,7 +30,7 @@ struct StorageView: View {
                 count: r2Buckets.count
             ) {
                 ForEach(r2Buckets) { bucket in
-                    R2BucketRow(bucket: bucket)
+                    R2BucketRow(bucket: bucket, accountId: accountId)
                 }
             }
 
@@ -40,7 +42,7 @@ struct StorageView: View {
                 count: d1Databases.count
             ) {
                 ForEach(d1Databases) { database in
-                    D1DatabaseRow(database: database)
+                    D1DatabaseRow(database: database, accountId: accountId)
                 }
             }
 
@@ -52,7 +54,7 @@ struct StorageView: View {
                 count: queues.count
             ) {
                 ForEach(queues) { queue in
-                    QueueRow(queue: queue)
+                    QueueRow(queue: queue, accountId: accountId)
                 }
             }
         }
@@ -110,97 +112,159 @@ struct StorageSection<Content: View>: View {
 
 struct KVNamespaceRow: View {
     let namespace: KVNamespace
+    let accountId: String?
+
+    @State private var isHovered = false
 
     var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(namespace.title)
-                    .font(.caption)
-                    .fontWeight(.medium)
+        Button(action: openInDashboard) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(namespace.title)
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(.primary)
 
-                Text(namespace.id)
+                    Text(namespace.id)
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                }
+
+                Spacer()
+
+                Image(systemName: "arrow.up.right")
                     .font(.caption2)
                     .foregroundColor(.secondary)
-                    .lineLimit(1)
+                    .opacity(isHovered ? 1 : 0)
             }
-
-            Spacer()
+            .padding(8)
+            .background(isHovered ? Color.accentColor.opacity(0.1) : Color(nsColor: .controlBackgroundColor))
+            .cornerRadius(6)
         }
-        .padding(8)
-        .background(Color(nsColor: .controlBackgroundColor))
-        .cornerRadius(6)
+        .buttonStyle(.plain)
+        .onHover { hovering in
+            isHovered = hovering
+            if hovering { NSCursor.pointingHand.push() } else { NSCursor.pop() }
+        }
+    }
+
+    private func openInDashboard() {
+        guard let accountId = accountId else { return }
+        if let url = URL(string: "https://dash.cloudflare.com/\(accountId)/workers/kv/namespaces/\(namespace.id)") {
+            NSWorkspace.shared.open(url)
+        }
     }
 }
 
 struct R2BucketRow: View {
     let bucket: R2Bucket
+    let accountId: String?
+
+    @State private var isHovered = false
 
     var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(bucket.name)
-                    .font(.caption)
-                    .fontWeight(.medium)
+        Button(action: openInDashboard) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(bucket.name)
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(.primary)
 
-                HStack(spacing: 8) {
-                    if let location = bucket.location {
-                        Label(location, systemImage: "mappin")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                    }
+                    HStack(spacing: 8) {
+                        if let location = bucket.location {
+                            Label(location, systemImage: "mappin")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
 
-                    if let date = bucket.creationDate {
-                        Label(date.formatted(.dateTime.month().year()), systemImage: "calendar")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
+                        if let date = bucket.creationDate {
+                            Label(date.formatted(.dateTime.month().year()), systemImage: "calendar")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
                     }
                 }
-            }
 
-            Spacer()
+                Spacer()
+
+                Image(systemName: "arrow.up.right")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                    .opacity(isHovered ? 1 : 0)
+            }
+            .padding(8)
+            .background(isHovered ? Color.accentColor.opacity(0.1) : Color(nsColor: .controlBackgroundColor))
+            .cornerRadius(6)
         }
-        .padding(8)
-        .background(Color(nsColor: .controlBackgroundColor))
-        .cornerRadius(6)
+        .buttonStyle(.plain)
+        .onHover { hovering in
+            isHovered = hovering
+            if hovering { NSCursor.pointingHand.push() } else { NSCursor.pop() }
+        }
+    }
+
+    private func openInDashboard() {
+        guard let accountId = accountId else { return }
+        if let url = URL(string: "https://dash.cloudflare.com/\(accountId)/r2/default/buckets/\(bucket.name)") {
+            NSWorkspace.shared.open(url)
+        }
     }
 }
 
 struct D1DatabaseRow: View {
     let database: D1Database
+    let accountId: String?
+
+    @State private var isHovered = false
 
     var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(database.name)
-                    .font(.caption)
-                    .fontWeight(.medium)
+        Button(action: openInDashboard) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(database.name)
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(.primary)
 
-                HStack(spacing: 8) {
-                    if let tables = database.numTables {
-                        Label("\(tables) tables", systemImage: "tablecells")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                    }
+                    HStack(spacing: 8) {
+                        if let tables = database.numTables {
+                            Label("\(tables) tables", systemImage: "tablecells")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
 
-                    if let size = database.fileSize {
-                        Label(formatBytes(size), systemImage: "externaldrive")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
+                        if let size = database.fileSize {
+                            Label(formatBytes(size), systemImage: "externaldrive")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
                     }
                 }
-            }
 
-            Spacer()
+                Spacer()
 
-            if let version = database.version {
-                Text("v\(version)")
+                if let version = database.version {
+                    Text("v\(version)")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+
+                Image(systemName: "arrow.up.right")
                     .font(.caption2)
                     .foregroundColor(.secondary)
+                    .opacity(isHovered ? 1 : 0)
             }
+            .padding(8)
+            .background(isHovered ? Color.accentColor.opacity(0.1) : Color(nsColor: .controlBackgroundColor))
+            .cornerRadius(6)
         }
-        .padding(8)
-        .background(Color(nsColor: .controlBackgroundColor))
-        .cornerRadius(6)
+        .buttonStyle(.plain)
+        .onHover { hovering in
+            isHovered = hovering
+            if hovering { NSCursor.pointingHand.push() } else { NSCursor.pop() }
+        }
     }
 
     private func formatBytes(_ bytes: Int) -> String {
@@ -208,37 +272,67 @@ struct D1DatabaseRow: View {
         formatter.countStyle = .file
         return formatter.string(fromByteCount: Int64(bytes))
     }
+
+    private func openInDashboard() {
+        guard let accountId = accountId else { return }
+        if let url = URL(string: "https://dash.cloudflare.com/\(accountId)/d1/database/\(database.uuid)") {
+            NSWorkspace.shared.open(url)
+        }
+    }
 }
 
 struct QueueRow: View {
     let queue: Queue
+    let accountId: String?
+
+    @State private var isHovered = false
 
     var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(queue.queueName)
-                    .font(.caption)
-                    .fontWeight(.medium)
+        Button(action: openInDashboard) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(queue.queueName)
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(.primary)
 
-                HStack(spacing: 8) {
-                    if let producers = queue.producersTotalCount {
-                        Label("\(producers) producers", systemImage: "arrow.up.circle")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                    }
+                    HStack(spacing: 8) {
+                        if let producers = queue.producersTotalCount {
+                            Label("\(producers) producers", systemImage: "arrow.up.circle")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
 
-                    if let consumers = queue.consumersTotalCount {
-                        Label("\(consumers) consumers", systemImage: "arrow.down.circle")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
+                        if let consumers = queue.consumersTotalCount {
+                            Label("\(consumers) consumers", systemImage: "arrow.down.circle")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
                     }
                 }
-            }
 
-            Spacer()
+                Spacer()
+
+                Image(systemName: "arrow.up.right")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                    .opacity(isHovered ? 1 : 0)
+            }
+            .padding(8)
+            .background(isHovered ? Color.accentColor.opacity(0.1) : Color(nsColor: .controlBackgroundColor))
+            .cornerRadius(6)
         }
-        .padding(8)
-        .background(Color(nsColor: .controlBackgroundColor))
-        .cornerRadius(6)
+        .buttonStyle(.plain)
+        .onHover { hovering in
+            isHovered = hovering
+            if hovering { NSCursor.pointingHand.push() } else { NSCursor.pop() }
+        }
+    }
+
+    private func openInDashboard() {
+        guard let accountId = accountId else { return }
+        if let url = URL(string: "https://dash.cloudflare.com/\(accountId)/queues/\(queue.queueId)") {
+            NSWorkspace.shared.open(url)
+        }
     }
 }

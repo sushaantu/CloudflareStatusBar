@@ -1,7 +1,12 @@
 import SwiftUI
+import AppKit
 
 struct MenuBarView: View {
     @ObservedObject var viewModel: CloudflareViewModel
+
+    private var accountId: String? {
+        viewModel.state.account?.id
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -24,17 +29,18 @@ struct MenuBarView: View {
                 ScrollView {
                     switch viewModel.selectedTab {
                     case .overview:
-                        OverviewView(viewModel: viewModel)
+                        OverviewView(viewModel: viewModel, accountId: accountId)
                     case .workers:
-                        WorkersView(workers: viewModel.state.workers)
+                        WorkersView(workers: viewModel.state.workers, accountId: accountId)
                     case .pages:
-                        PagesView(projects: viewModel.state.pagesProjects)
+                        PagesView(projects: viewModel.state.pagesProjects, accountId: accountId)
                     case .storage:
                         StorageView(
                             kvNamespaces: viewModel.state.kvNamespaces,
                             r2Buckets: viewModel.state.r2Buckets,
                             d1Databases: viewModel.state.d1Databases,
-                            queues: viewModel.state.queues
+                            queues: viewModel.state.queues,
+                            accountId: accountId
                         )
                     }
                 }
@@ -178,77 +184,206 @@ struct MenuBarView: View {
 
 struct OverviewView: View {
     @ObservedObject var viewModel: CloudflareViewModel
+    let accountId: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Stats Grid
-            LazyVGrid(columns: [
-                GridItem(.flexible()),
-                GridItem(.flexible())
-            ], spacing: 12) {
-                StatCard(
-                    title: "Workers",
-                    count: viewModel.state.workers.count,
-                    icon: "server.rack",
-                    color: .blue
-                )
+            // Recent Activity
+            Text("Recent Activity")
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundColor(.secondary)
 
-                StatCard(
-                    title: "Pages",
-                    count: viewModel.state.pagesProjects.count,
-                    icon: "doc.richtext",
-                    color: .purple
-                )
-
-                StatCard(
-                    title: "KV Namespaces",
-                    count: viewModel.state.kvNamespaces.count,
-                    icon: "key",
-                    color: .orange
-                )
-
-                StatCard(
-                    title: "R2 Buckets",
-                    count: viewModel.state.r2Buckets.count,
-                    icon: "externaldrive",
-                    color: .green
-                )
-
-                StatCard(
-                    title: "D1 Databases",
-                    count: viewModel.state.d1Databases.count,
-                    icon: "cylinder",
-                    color: .indigo
-                )
-
-                StatCard(
-                    title: "Queues",
-                    count: viewModel.state.queues.count,
-                    icon: "list.bullet.rectangle",
-                    color: .teal
-                )
-            }
-
-            // Recent Deployments
-            if !viewModel.state.pagesProjects.isEmpty {
-                Text("Recent Deployments")
+            if recentActivity.isEmpty {
+                Text("No recent activity")
                     .font(.caption)
-                    .fontWeight(.semibold)
                     .foregroundColor(.secondary)
-                    .padding(.top, 8)
-
-                ForEach(recentDeployments.prefix(3)) { deployment in
-                    DeploymentRow(deployment: deployment)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, 20)
+            } else {
+                ForEach(recentActivity.prefix(8), id: \.id) { item in
+                    ActivityRow(item: item, accountId: accountId)
                 }
             }
+
+            // Compact summary at bottom
+            HStack(spacing: 16) {
+                SummaryBadge(count: viewModel.state.workers.count, label: "Workers", icon: "server.rack")
+                SummaryBadge(count: viewModel.state.pagesProjects.count, label: "Pages", icon: "doc.richtext")
+                SummaryBadge(count: viewModel.state.kvNamespaces.count + viewModel.state.r2Buckets.count + viewModel.state.d1Databases.count, label: "Storage", icon: "externaldrive")
+            }
+            .padding(.top, 8)
         }
         .padding()
     }
 
-    private var recentDeployments: [PagesDeployment] {
-        viewModel.state.pagesProjects
-            .compactMap { $0.latestDeployment }
-            .sorted { ($0.createdOn ?? .distantPast) > ($1.createdOn ?? .distantPast) }
+    private var recentActivity: [ActivityItem] {
+        var items: [ActivityItem] = []
+
+        // Add workers with modification dates
+        for worker in viewModel.state.workers {
+            items.append(ActivityItem(
+                id: "worker-\(worker.id)",
+                name: worker.name,
+                type: .worker,
+                date: worker.modifiedOn ?? worker.createdOn,
+                status: nil,
+                subtitle: nil,
+                url: nil
+            ))
+        }
+
+        // Add pages projects with their latest deployment info
+        for project in viewModel.state.pagesProjects {
+            let deployment = project.latestDeployment
+            items.append(ActivityItem(
+                id: "pages-\(project.id)",
+                name: project.name,
+                type: .pages,
+                date: deployment?.createdOn ?? project.modifiedOn,
+                status: deployment?.status,
+                subtitle: deployment?.deploymentTrigger?.metadata?.branch,
+                url: deployment?.url
+            ))
+        }
+
+        // Sort by most recent
+        return items.sorted { ($0.date ?? .distantPast) > ($1.date ?? .distantPast) }
+    }
+}
+
+struct ActivityItem {
+    let id: String
+    let name: String
+    let type: ActivityType
+    let date: Date?
+    let status: DeploymentStatus?
+    let subtitle: String?
+    let url: String?
+
+    enum ActivityType {
+        case worker
+        case pages
+
+        var icon: String {
+            switch self {
+            case .worker: return "server.rack"
+            case .pages: return "doc.richtext"
+            }
+        }
+
+        var color: Color {
+            switch self {
+            case .worker: return .blue
+            case .pages: return .purple
+            }
+        }
+    }
+}
+
+struct ActivityRow: View {
+    let item: ActivityItem
+    let accountId: String?
+
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: openInDashboard) {
+            HStack(spacing: 10) {
+                Image(systemName: item.type.icon)
+                    .font(.caption)
+                    .foregroundColor(item.type.color)
+                    .frame(width: 16)
+
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(item.name)
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(.primary)
+                        .lineLimit(1)
+
+                    if let subtitle = item.subtitle {
+                        Text(subtitle)
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                            .lineLimit(1)
+                    }
+                }
+
+                Spacer()
+
+                if let status = item.status {
+                    Image(systemName: status.iconName)
+                        .font(.caption2)
+                        .foregroundColor(statusColor(status))
+                }
+
+                if let date = item.date {
+                    Text(date.formatted(.relative(presentation: .named)))
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+
+                Image(systemName: "arrow.up.right")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                    .opacity(isHovered ? 1 : 0)
+            }
+            .padding(.vertical, 6)
+            .padding(.horizontal, 8)
+            .background(isHovered ? Color.accentColor.opacity(0.1) : Color(nsColor: .controlBackgroundColor))
+            .cornerRadius(6)
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering in
+            isHovered = hovering
+            if hovering {
+                NSCursor.pointingHand.push()
+            } else {
+                NSCursor.pop()
+            }
+        }
+    }
+
+    private func openInDashboard() {
+        guard let accountId = accountId else { return }
+        let urlString: String
+        switch item.type {
+        case .worker:
+            urlString = "https://dash.cloudflare.com/\(accountId)/workers/services/view/\(item.name)/production"
+        case .pages:
+            urlString = "https://dash.cloudflare.com/\(accountId)/pages/view/\(item.name)"
+        }
+        if let url = URL(string: urlString) {
+            NSWorkspace.shared.open(url)
+        }
+    }
+
+    private func statusColor(_ status: DeploymentStatus) -> Color {
+        switch status {
+        case .success: return .green
+        case .failure: return .red
+        case .active: return .blue
+        case .canceled: return .orange
+        default: return .gray
+        }
+    }
+}
+
+struct SummaryBadge: View {
+    let count: Int
+    let label: String
+    let icon: String
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Image(systemName: icon)
+                .font(.caption2)
+                .foregroundColor(.secondary)
+            Text("\(count)")
+                .font(.caption)
+                .fontWeight(.medium)
+        }
     }
 }
 
