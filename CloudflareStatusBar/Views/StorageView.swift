@@ -72,39 +72,60 @@ struct StorageSection<Content: View>: View {
     @State private var isExpanded = true
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Button(action: { withAnimation { isExpanded.toggle() } }) {
-                HStack {
-                    Image(systemName: icon)
-                        .foregroundColor(color)
-                        .frame(width: 20)
-
-                    Text(title)
-                        .font(.caption)
-                        .fontWeight(.semibold)
-
-                    Text("(\(count))")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-
-                    Spacer()
-
-                    Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-            }
-            .buttonStyle(.plain)
-
-            if isExpanded {
-                if count == 0 {
-                    Text("No \(title.lowercased()) found")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                        .padding(.leading, 28)
-                } else {
+        DisclosureGroup(isExpanded: $isExpanded) {
+            if count == 0 {
+                Text("No \(title.lowercased()) found")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                    .padding(.leading, 4)
+                    .padding(.vertical, 4)
+            } else {
+                VStack(alignment: .leading, spacing: 6) {
                     content()
                 }
+                .padding(.top, 4)
+            }
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: icon)
+                    .foregroundColor(color)
+                    .frame(width: 18)
+
+                Text(title)
+                    .font(.caption)
+                    .fontWeight(.semibold)
+
+                Text("(\(count))")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+        }
+        .disclosureGroupStyle(CustomDisclosureStyle())
+    }
+}
+
+struct CustomDisclosureStyle: DisclosureGroupStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                configuration.label
+                Spacer()
+                Image(systemName: configuration.isExpanded ? "chevron.down" : "chevron.right")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            .padding(.vertical, 8)
+            .padding(.horizontal, 4)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    configuration.isExpanded.toggle()
+                }
+            }
+
+            if configuration.isExpanded {
+                configuration.content
+                    .padding(.leading, 26)
             }
         }
     }

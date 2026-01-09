@@ -92,7 +92,9 @@ struct PagesProjectRow: View {
 
             // Expandable details section
             if let deployment = project.latestDeployment {
-                Button(action: { withAnimation(.easeInOut(duration: 0.2)) { isExpanded.toggle() } }) {
+                DisclosureGroup(isExpanded: $isExpanded) {
+                    expandedContent
+                } label: {
                     HStack {
                         if let trigger = deployment.deploymentTrigger?.metadata {
                             if let branch = trigger.branch {
@@ -109,92 +111,11 @@ struct PagesProjectRow: View {
                                 .font(.caption2)
                                 .foregroundColor(.secondary)
                         }
-
-                        Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                    }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
-                }
-                .buttonStyle(.plain)
-            }
-
-            // Expanded Details
-            if isExpanded {
-                VStack(alignment: .leading, spacing: 8) {
-                    // Source info
-                    if let source = project.source?.config {
-                        if let owner = source.owner, let repo = source.repoName {
-                            Button(action: { openGitHub(owner: owner, repo: repo) }) {
-                                HStack {
-                                    Image(systemName: "arrow.triangle.branch")
-                                        .font(.caption2)
-                                    Text("\(owner)/\(repo)")
-                                        .font(.caption2)
-                                    Image(systemName: "arrow.up.right")
-                                        .font(.caption2)
-                                }
-                                .foregroundColor(.accentColor)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-
-                    // Latest deployment info
-                    if let deployment = project.latestDeployment {
-                        if let commitMessage = deployment.deploymentTrigger?.metadata?.commitMessage {
-                            Text(commitMessage)
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                                .lineLimit(2)
-                        }
-
-                        // Preview URL
-                        if let url = deployment.url {
-                            Button(action: { openURL(url) }) {
-                                HStack {
-                                    Image(systemName: "globe")
-                                        .font(.caption2)
-                                    Text("Open Preview")
-                                        .font(.caption2)
-                                    Image(systemName: "arrow.up.right")
-                                        .font(.caption2)
-                                }
-                                .foregroundColor(.accentColor)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-
-                    // Custom domains
-                    if let domains = project.domains, !domains.isEmpty {
-                        Divider()
-
-                        Text("Domains")
-                            .font(.caption2)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.secondary)
-
-                        ForEach(domains, id: \.self) { domain in
-                            Button(action: { openURL("https://\(domain)") }) {
-                                HStack {
-                                    Image(systemName: "link")
-                                        .font(.caption2)
-                                    Text(domain)
-                                        .font(.caption2)
-                                    Spacer()
-                                    Image(systemName: "arrow.up.right")
-                                        .font(.caption2)
-                                }
-                                .foregroundColor(.accentColor)
-                            }
-                            .buttonStyle(.plain)
-                        }
                     }
                 }
-                .padding(10)
+                .disclosureGroupStyle(ProjectDisclosureStyle())
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
                 .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
             }
         }
@@ -203,6 +124,82 @@ struct PagesProjectRow: View {
             RoundedRectangle(cornerRadius: 8)
                 .stroke(Color(nsColor: .separatorColor), lineWidth: 0.5)
         )
+    }
+
+    @ViewBuilder
+    private var expandedContent: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            // Source info
+            if let source = project.source?.config {
+                if let owner = source.owner, let repo = source.repoName {
+                    Button(action: { openGitHub(owner: owner, repo: repo) }) {
+                        HStack {
+                            Image(systemName: "arrow.triangle.branch")
+                                .font(.caption2)
+                            Text("\(owner)/\(repo)")
+                                .font(.caption2)
+                            Image(systemName: "arrow.up.right")
+                                .font(.caption2)
+                        }
+                        .foregroundColor(.accentColor)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
+            // Latest deployment info
+            if let deployment = project.latestDeployment {
+                if let commitMessage = deployment.deploymentTrigger?.metadata?.commitMessage {
+                    Text(commitMessage)
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                        .lineLimit(2)
+                }
+
+                // Preview URL
+                if let url = deployment.url {
+                    Button(action: { openURL(url) }) {
+                        HStack {
+                            Image(systemName: "globe")
+                                .font(.caption2)
+                            Text("Open Preview")
+                                .font(.caption2)
+                            Image(systemName: "arrow.up.right")
+                                .font(.caption2)
+                        }
+                        .foregroundColor(.accentColor)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
+            // Custom domains
+            if let domains = project.domains, !domains.isEmpty {
+                Divider()
+
+                Text("Domains")
+                    .font(.caption2)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.secondary)
+
+                ForEach(domains, id: \.self) { domain in
+                    Button(action: { openURL("https://\(domain)") }) {
+                        HStack {
+                            Image(systemName: "link")
+                                .font(.caption2)
+                            Text(domain)
+                                .font(.caption2)
+                            Spacer()
+                            Image(systemName: "arrow.up.right")
+                                .font(.caption2)
+                        }
+                        .foregroundColor(.accentColor)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .padding(.vertical, 8)
     }
 
     private func openInDashboard() {
@@ -225,6 +222,32 @@ struct PagesProjectRow: View {
         }
         if let url = URL(string: finalURL) {
             NSWorkspace.shared.open(url)
+        }
+    }
+}
+
+// Custom disclosure style for project details
+struct ProjectDisclosureStyle: DisclosureGroupStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                configuration.label
+                Image(systemName: configuration.isExpanded ? "chevron.up" : "chevron.down")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
+            .padding(.vertical, 6)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    configuration.isExpanded.toggle()
+                }
+            }
+
+            if configuration.isExpanded {
+                configuration.content
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+            }
         }
     }
 }

@@ -93,10 +93,11 @@ CloudflareStatusBar/
 
 The app looks for Wrangler credentials in these locations (in order):
 
-1. `~/.wrangler/config/default.toml`
-2. `~/.config/.wrangler/config/default.toml`
-3. `~/.config/wrangler/config/default.toml`
-4. Environment variable: `CLOUDFLARE_API_TOKEN`
+1. `~/Library/Preferences/.wrangler/config/default.toml` (macOS default)
+2. `~/.wrangler/config/default.toml`
+3. `~/.config/.wrangler/config/default.toml`
+4. `~/.config/wrangler/config/default.toml`
+5. Environment variable: `CLOUDFLARE_API_TOKEN`
 
 ## Troubleshooting
 
