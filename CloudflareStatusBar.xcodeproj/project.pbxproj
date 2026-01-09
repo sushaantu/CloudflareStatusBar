@@ -1,0 +1,410 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		E81A00012B4C5A0000000001 /* CloudflareStatusBarApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00002B4C5A0000000001 /* CloudflareStatusBarApp.swift */; };
+		E81A00012B4C5A0000000002 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00002B4C5A0000000002 /* AppDelegate.swift */; };
+		E81A00012B4C5A0000000003 /* WranglerAuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00002B4C5A0000000003 /* WranglerAuthService.swift */; };
+		E81A00012B4C5A0000000004 /* CloudflareAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00002B4C5A0000000004 /* CloudflareAPIClient.swift */; };
+		E81A00012B4C5A0000000005 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00002B4C5A0000000005 /* NotificationService.swift */; };
+		E81A00012B4C5A0000000006 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00002B4C5A0000000006 /* Models.swift */; };
+		E81A00012B4C5A0000000007 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00002B4C5A0000000007 /* MenuBarView.swift */; };
+		E81A00012B4C5A0000000008 /* WorkersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00002B4C5A0000000008 /* WorkersView.swift */; };
+		E81A00012B4C5A0000000009 /* PagesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00002B4C5A0000000009 /* PagesView.swift */; };
+		E81A00012B4C5A0000000010 /* StorageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00002B4C5A0000000010 /* StorageView.swift */; };
+		E81A00012B4C5A0000000011 /* CloudflareViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00002B4C5A0000000011 /* CloudflareViewModel.swift */; };
+		E81A00012B4C5A0000000012 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E81A00002B4C5A0000000012 /* Assets.xcassets */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		E81A00002B4C5A0000000000 /* CloudflareStatusBar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CloudflareStatusBar.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E81A00002B4C5A0000000001 /* CloudflareStatusBarApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudflareStatusBarApp.swift; sourceTree = "<group>"; };
+		E81A00002B4C5A0000000002 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		E81A00002B4C5A0000000003 /* WranglerAuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WranglerAuthService.swift; sourceTree = "<group>"; };
+		E81A00002B4C5A0000000004 /* CloudflareAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudflareAPIClient.swift; sourceTree = "<group>"; };
+		E81A00002B4C5A0000000005 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
+		E81A00002B4C5A0000000006 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		E81A00002B4C5A0000000007 /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
+		E81A00002B4C5A0000000008 /* WorkersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkersView.swift; sourceTree = "<group>"; };
+		E81A00002B4C5A0000000009 /* PagesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PagesView.swift; sourceTree = "<group>"; };
+		E81A00002B4C5A0000000010 /* StorageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageView.swift; sourceTree = "<group>"; };
+		E81A00002B4C5A0000000011 /* CloudflareViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudflareViewModel.swift; sourceTree = "<group>"; };
+		E81A00002B4C5A0000000012 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		E81A00002B4C5A0000000013 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		E81A00002B4C5A0000000014 /* CloudflareStatusBar.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CloudflareStatusBar.entitlements; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		E81A00032B4C5A0000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		E81A00042B4C5A0000000001 = {
+			isa = PBXGroup;
+			children = (
+				E81A00042B4C5A0000000002 /* CloudflareStatusBar */,
+				E81A00042B4C5A0000000003 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		E81A00042B4C5A0000000002 /* CloudflareStatusBar */ = {
+			isa = PBXGroup;
+			children = (
+				E81A00042B4C5A0000000004 /* App */,
+				E81A00042B4C5A0000000005 /* Services */,
+				E81A00042B4C5A0000000006 /* Models */,
+				E81A00042B4C5A0000000007 /* Views */,
+				E81A00042B4C5A0000000008 /* Resources */,
+			);
+			path = CloudflareStatusBar;
+			sourceTree = "<group>";
+		};
+		E81A00042B4C5A0000000003 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E81A00002B4C5A0000000000 /* CloudflareStatusBar.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		E81A00042B4C5A0000000004 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				E81A00002B4C5A0000000001 /* CloudflareStatusBarApp.swift */,
+				E81A00002B4C5A0000000002 /* AppDelegate.swift */,
+				E81A00002B4C5A0000000011 /* CloudflareViewModel.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		E81A00042B4C5A0000000005 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				E81A00002B4C5A0000000003 /* WranglerAuthService.swift */,
+				E81A00002B4C5A0000000004 /* CloudflareAPIClient.swift */,
+				E81A00002B4C5A0000000005 /* NotificationService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		E81A00042B4C5A0000000006 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				E81A00002B4C5A0000000006 /* Models.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		E81A00042B4C5A0000000007 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				E81A00002B4C5A0000000007 /* MenuBarView.swift */,
+				E81A00002B4C5A0000000008 /* WorkersView.swift */,
+				E81A00002B4C5A0000000009 /* PagesView.swift */,
+				E81A00002B4C5A0000000010 /* StorageView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		E81A00042B4C5A0000000008 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				E81A00002B4C5A0000000012 /* Assets.xcassets */,
+				E81A00002B4C5A0000000013 /* Info.plist */,
+				E81A00002B4C5A0000000014 /* CloudflareStatusBar.entitlements */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		E81A00052B4C5A0000000001 /* CloudflareStatusBar */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E81A00062B4C5A0000000001 /* Build configuration list for PBXNativeTarget "CloudflareStatusBar" */;
+			buildPhases = (
+				E81A00052B4C5A0000000002 /* Sources */,
+				E81A00032B4C5A0000000001 /* Frameworks */,
+				E81A00052B4C5A0000000003 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = CloudflareStatusBar;
+			productName = CloudflareStatusBar;
+			productReference = E81A00002B4C5A0000000000 /* CloudflareStatusBar.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		E81A00072B4C5A0000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					E81A00052B4C5A0000000001 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = E81A00072B4C5A0000000002 /* Build configuration list for PBXProject "CloudflareStatusBar" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = E81A00042B4C5A0000000001;
+			productRefGroup = E81A00042B4C5A0000000003 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				E81A00052B4C5A0000000001 /* CloudflareStatusBar */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		E81A00052B4C5A0000000003 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E81A00012B4C5A0000000012 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		E81A00052B4C5A0000000002 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E81A00012B4C5A0000000001 /* CloudflareStatusBarApp.swift in Sources */,
+				E81A00012B4C5A0000000002 /* AppDelegate.swift in Sources */,
+				E81A00012B4C5A0000000003 /* WranglerAuthService.swift in Sources */,
+				E81A00012B4C5A0000000004 /* CloudflareAPIClient.swift in Sources */,
+				E81A00012B4C5A0000000005 /* NotificationService.swift in Sources */,
+				E81A00012B4C5A0000000006 /* Models.swift in Sources */,
+				E81A00012B4C5A0000000007 /* MenuBarView.swift in Sources */,
+				E81A00012B4C5A0000000008 /* WorkersView.swift in Sources */,
+				E81A00012B4C5A0000000009 /* PagesView.swift in Sources */,
+				E81A00012B4C5A0000000010 /* StorageView.swift in Sources */,
+				E81A00012B4C5A0000000011 /* CloudflareViewModel.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		E81A00082B4C5A0000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		E81A00082B4C5A0000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		E81A00092B4C5A0000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = CloudflareStatusBar/Resources/CloudflareStatusBar.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = CloudflareStatusBar/Resources/Info.plist;
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.cloudflare.statusbar;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		E81A00092B4C5A0000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = CloudflareStatusBar/Resources/CloudflareStatusBar.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = CloudflareStatusBar/Resources/Info.plist;
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.cloudflare.statusbar;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		E81A00062B4C5A0000000001 /* Build configuration list for PBXNativeTarget "CloudflareStatusBar" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E81A00092B4C5A0000000001 /* Debug */,
+				E81A00092B4C5A0000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E81A00072B4C5A0000000002 /* Build configuration list for PBXProject "CloudflareStatusBar" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E81A00082B4C5A0000000001 /* Debug */,
+				E81A00082B4C5A0000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = E81A00072B4C5A0000000001 /* Project object */;
+}
