@@ -2,6 +2,8 @@
 
 A native macOS status bar app for monitoring your Cloudflare resources using Wrangler authentication.
 
+![Overview](Screenshots/overview.png)
+
 ## Features
 
 - **Workers** - View all deployed Workers with usage model and compatibility info
