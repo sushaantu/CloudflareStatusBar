@@ -2,7 +2,9 @@
 
 A native macOS status bar app for monitoring your Cloudflare resources using Wrangler authentication.
 
-![Overview](Screenshots/overview.png)
+<p align="center">
+  <img src="Screenshots/overview.png" width="400" alt="CloudflareStatusBar Overview">
+</p>
 
 ## Features
 
