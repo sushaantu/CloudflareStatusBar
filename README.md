@@ -117,6 +117,10 @@ Ensure your Cloudflare account has access to the resources you're trying to view
 
 Check that `LSUIElement` is set to `YES` in Info.plist (this hides the dock icon and shows only in menu bar).
 
+## Disclaimer
+
+This project is not affiliated with, endorsed by, or sponsored by Cloudflare, Inc. "Cloudflare" is a registered trademark of Cloudflare, Inc.
+
 ## License
 
 MIT
