@@ -6,6 +6,12 @@ A native macOS status bar app for monitoring your Cloudflare resources using Wra
   <img src="Screenshots/overview.png" width="400" alt="CloudflareStatusBar Overview">
 </p>
 
+<p align="center">
+  <a href="https://github.com/sushaantu/CloudflareStatusBar/releases/latest/download/CloudflareStatusBar.zip">
+    <strong>⬇️ Download Latest Release</strong>
+  </a>
+</p>
+
 ## Features
 
 - **Workers** - View all deployed Workers with usage model and compatibility info
