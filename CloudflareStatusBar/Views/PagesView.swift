@@ -232,7 +232,7 @@ struct ProjectDisclosureStyle: DisclosureGroupStyle {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
                 configuration.label
-                Image(systemName: configuration.isExpanded ? "chevron.up" : "chevron.down")
+                Image(systemName: configuration.isExpanded ? "chevron.down" : "chevron.right")
                     .font(.caption2)
                     .foregroundColor(.secondary)
             }
