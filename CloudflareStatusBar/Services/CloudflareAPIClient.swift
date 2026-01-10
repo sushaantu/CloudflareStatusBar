@@ -2,6 +2,7 @@ import Foundation
 
 enum CloudflareAPIError: Error, LocalizedError {
     case notAuthenticated
+    case tokenExpired
     case networkError(Error)
     case invalidResponse
     case apiError(String)
@@ -10,7 +11,9 @@ enum CloudflareAPIError: Error, LocalizedError {
     var errorDescription: String? {
         switch self {
         case .notAuthenticated:
-            return "Not authenticated. Please run 'wrangler login' first."
+            return "Not authenticated. Run 'wrangler login' in Terminal."
+        case .tokenExpired:
+            return "Session expired. Run 'wrangler login' in Terminal to re-authenticate."
         case .networkError(let error):
             return "Network error: \(error.localizedDescription)"
         case .invalidResponse:
@@ -20,6 +23,22 @@ enum CloudflareAPIError: Error, LocalizedError {
         case .decodingError(let error):
             return "Failed to decode response: \(error.localizedDescription)"
         }
+    }
+
+    /// Check if an error message indicates an authentication problem
+    static func isAuthError(_ message: String) -> Bool {
+        let authKeywords = [
+            "invalid access token",
+            "invalid token",
+            "expired",
+            "authentication",
+            "unauthorized",
+            "not authorized",
+            "invalid credentials",
+            "token is invalid"
+        ]
+        let lowercased = message.lowercased()
+        return authKeywords.contains { lowercased.contains($0) }
     }
 }
 
@@ -109,6 +128,10 @@ class CloudflareAPIClient {
 
             if !apiResponse.success {
                 let errorMessage = apiResponse.errors.map { $0.message }.joined(separator: ", ")
+                // Check if this is an authentication error
+                if CloudflareAPIError.isAuthError(errorMessage) {
+                    throw CloudflareAPIError.tokenExpired
+                }
                 throw CloudflareAPIError.apiError(errorMessage.isEmpty ? "Unknown error" : errorMessage)
             }
 
