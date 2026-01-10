@@ -165,6 +165,12 @@ struct MenuBarView: View {
 
             Spacer()
 
+            Button(action: viewModel.checkForUpdates) {
+                Image(systemName: "arrow.down.circle")
+            }
+            .buttonStyle(.plain)
+            .help("Check for Updates")
+
             Button(action: viewModel.openDashboard) {
                 Image(systemName: "globe")
             }

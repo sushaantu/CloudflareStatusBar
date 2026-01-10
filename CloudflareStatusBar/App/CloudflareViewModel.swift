@@ -182,4 +182,10 @@ class CloudflareViewModel: ObservableObject {
     func quit() {
         NSApplication.shared.terminate(nil)
     }
+
+    func checkForUpdates() {
+        if let url = URL(string: "https://github.com/sushaantu/CloudflareStatusBar/releases") {
+            NSWorkspace.shared.open(url)
+        }
+    }
 }
