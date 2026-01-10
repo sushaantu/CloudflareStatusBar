@@ -12,6 +12,7 @@
 		E81A00012B4C5A0000000003 /* WranglerAuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00002B4C5A0000000003 /* WranglerAuthService.swift */; };
 		E81A00012B4C5A0000000004 /* CloudflareAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00002B4C5A0000000004 /* CloudflareAPIClient.swift */; };
 		E81A00012B4C5A0000000005 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00002B4C5A0000000005 /* NotificationService.swift */; };
+		E81A00012B4C5A0000000015 /* UpdateService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00002B4C5A0000000015 /* UpdateService.swift */; };
 		E81A00012B4C5A0000000006 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00002B4C5A0000000006 /* Models.swift */; };
 		E81A00012B4C5A0000000007 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00002B4C5A0000000007 /* MenuBarView.swift */; };
 		E81A00012B4C5A0000000008 /* WorkersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00002B4C5A0000000008 /* WorkersView.swift */; };
@@ -28,6 +29,7 @@
 		E81A00002B4C5A0000000003 /* WranglerAuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WranglerAuthService.swift; sourceTree = "<group>"; };
 		E81A00002B4C5A0000000004 /* CloudflareAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudflareAPIClient.swift; sourceTree = "<group>"; };
 		E81A00002B4C5A0000000005 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
+		E81A00002B4C5A0000000015 /* UpdateService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateService.swift; sourceTree = "<group>"; };
 		E81A00002B4C5A0000000006 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		E81A00002B4C5A0000000007 /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
 		E81A00002B4C5A0000000008 /* WorkersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkersView.swift; sourceTree = "<group>"; };
@@ -94,6 +96,7 @@
 				E81A00002B4C5A0000000003 /* WranglerAuthService.swift */,
 				E81A00002B4C5A0000000004 /* CloudflareAPIClient.swift */,
 				E81A00002B4C5A0000000005 /* NotificationService.swift */,
+				E81A00002B4C5A0000000015 /* UpdateService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -201,6 +204,7 @@
 				E81A00012B4C5A0000000003 /* WranglerAuthService.swift in Sources */,
 				E81A00012B4C5A0000000004 /* CloudflareAPIClient.swift in Sources */,
 				E81A00012B4C5A0000000005 /* NotificationService.swift in Sources */,
+				E81A00012B4C5A0000000015 /* UpdateService.swift in Sources */,
 				E81A00012B4C5A0000000006 /* Models.swift in Sources */,
 				E81A00012B4C5A0000000007 /* MenuBarView.swift in Sources */,
 				E81A00012B4C5A0000000008 /* WorkersView.swift in Sources */,
@@ -348,7 +352,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.cloudflare.statusbar;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -375,7 +379,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.cloudflare.statusbar;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;

@@ -184,8 +184,19 @@ class CloudflareViewModel: ObservableObject {
     }
 
     func checkForUpdates() {
-        if let url = URL(string: "https://github.com/sushaantu/CloudflareStatusBar/releases") {
-            NSWorkspace.shared.open(url)
+        Task {
+            await UpdateService.shared.checkForUpdates()
+            if UpdateService.shared.updateAvailable {
+                UpdateService.shared.showUpdateAlert()
+            } else {
+                // Show "up to date" message
+                let alert = NSAlert()
+                alert.messageText = "You're Up to Date"
+                alert.informativeText = "CloudflareStatusBar \(UpdateService.shared.currentVersion) is the latest version."
+                alert.alertStyle = .informational
+                alert.addButton(withTitle: "OK")
+                alert.runModal()
+            }
         }
     }
 }
