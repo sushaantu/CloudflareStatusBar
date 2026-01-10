@@ -39,10 +39,8 @@ class NotificationService: NSObject {
     }
 
     func requestPermission() {
-        center.requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
-            if let error = error {
-                print("Notification permission error: \(error.localizedDescription)")
-            }
+        center.requestAuthorization(options: [.alert, .sound, .badge]) { _, _ in
+            // Permission handled silently
         }
     }
 
@@ -88,11 +86,7 @@ class NotificationService: NSObject {
             trigger: nil
         )
 
-        center.add(request) { error in
-            if let error = error {
-                print("Failed to send notification: \(error.localizedDescription)")
-            }
-        }
+        center.add(request)
     }
 
     func sendWorkerNotification(workerName: String, event: String) {
