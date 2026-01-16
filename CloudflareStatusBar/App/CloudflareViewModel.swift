@@ -10,6 +10,7 @@ class CloudflareViewModel: ObservableObject {
     private var refreshTimer: Timer?
     private let refreshInterval: TimeInterval = 300 // 5 minutes
     private let api = CloudflareAPIClient.shared
+    private let selectedAccountKey = "selectedAccountId"
 
     enum Tab: String, CaseIterable {
         case overview = "Overview"
@@ -19,7 +20,19 @@ class CloudflareViewModel: ObservableObject {
     }
 
     init() {
+        // Load saved account selection
+        state.selectedAccountId = UserDefaults.standard.string(forKey: selectedAccountKey)
         checkAuthentication()
+    }
+
+    func selectAccount(_ accountId: String) {
+        state.selectedAccountId = accountId
+        UserDefaults.standard.set(accountId, forKey: selectedAccountKey)
+
+        // Refresh data for the new account
+        Task {
+            await refresh()
+        }
     }
 
     func checkAuthentication() {
@@ -57,13 +70,20 @@ class CloudflareViewModel: ObservableObject {
             // First, get account info
             let accounts: [Account] = try await api.getAccounts()
 
-            guard let account = accounts.first else {
+            guard !accounts.isEmpty else {
                 state.error = "No accounts found"
                 state.isLoading = false
                 return
             }
 
-            state.account = account
+            state.accounts = accounts
+
+            // Use selected account or fall back to first
+            guard let account = state.selectedAccount else {
+                state.error = "No account selected"
+                state.isLoading = false
+                return
+            }
 
             // Update notification service with accountId for deep links
             NotificationService.shared.accountId = account.id
@@ -159,21 +179,21 @@ class CloudflareViewModel: ObservableObject {
     }
 
     func openWorkersDashboard() {
-        guard let accountId = state.account?.id else { return }
+        guard let accountId = state.selectedAccount?.id else { return }
         if let url = URL(string: "https://dash.cloudflare.com/\(accountId)/workers") {
             NSWorkspace.shared.open(url)
         }
     }
 
     func openPagesDashboard() {
-        guard let accountId = state.account?.id else { return }
+        guard let accountId = state.selectedAccount?.id else { return }
         if let url = URL(string: "https://dash.cloudflare.com/\(accountId)/pages") {
             NSWorkspace.shared.open(url)
         }
     }
 
     func openStorageDashboard() {
-        guard let accountId = state.account?.id else { return }
+        guard let accountId = state.selectedAccount?.id else { return }
         if let url = URL(string: "https://dash.cloudflare.com/\(accountId)/r2") {
             NSWorkspace.shared.open(url)
         }

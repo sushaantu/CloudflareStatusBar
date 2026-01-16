@@ -7,6 +7,7 @@ enum CloudflareAPIError: Error, LocalizedError {
     case invalidResponse
     case apiError(String)
     case decodingError(Error)
+    case unexpectedContentType(String?, String)
 
     var errorDescription: String? {
         switch self {
@@ -22,6 +23,8 @@ enum CloudflareAPIError: Error, LocalizedError {
             return "API error: \(message)"
         case .decodingError(let error):
             return "Failed to decode response: \(error.localizedDescription)"
+        case .unexpectedContentType(let contentType, let preview):
+            return "Unexpected response format (received \(contentType ?? "unknown")). This may be caused by a proxy or firewall. Preview: \(preview)"
         }
     }
 
@@ -109,6 +112,7 @@ class CloudflareAPIClient {
         request.httpMethod = method
         request.setValue(authHeader, forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
 
         do {
             let (data, response) = try await session.data(for: request)
@@ -119,6 +123,16 @@ class CloudflareAPIClient {
 
             if httpResponse.statusCode == 401 {
                 throw CloudflareAPIError.notAuthenticated
+            }
+
+            // Validate Content-Type before attempting to decode
+            let contentType = httpResponse.value(forHTTPHeaderField: "Content-Type")
+            let isJSON = contentType?.lowercased().contains("application/json") ?? false
+
+            if !isJSON {
+                // Response is not JSON - likely a proxy/firewall HTML page
+                let preview = String(data: data.prefix(200), encoding: .utf8) ?? "<binary data>"
+                throw CloudflareAPIError.unexpectedContentType(contentType, preview)
             }
 
             let decoder = JSONDecoder()

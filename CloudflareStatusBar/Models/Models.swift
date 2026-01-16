@@ -340,7 +340,8 @@ struct CloudflareState {
     var error: String?
     var lastRefresh: Date?
 
-    var account: Account?
+    var accounts: [Account] = []
+    var selectedAccountId: String?
     var workers: [Worker] = []
     var pagesProjects: [PagesProject] = []
     var kvNamespaces: [KVNamespace] = []
@@ -350,4 +351,11 @@ struct CloudflareState {
 
     // Track deployment states for notifications
     var previousDeploymentStates: [String: DeploymentStatus] = [:]
+
+    var selectedAccount: Account? {
+        if let selectedId = selectedAccountId {
+            return accounts.first { $0.id == selectedId }
+        }
+        return accounts.first
+    }
 }

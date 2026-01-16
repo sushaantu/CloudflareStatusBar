@@ -5,7 +5,7 @@ struct MenuBarView: View {
     @ObservedObject var viewModel: CloudflareViewModel
 
     private var accountId: String? {
-        viewModel.state.account?.id
+        viewModel.state.selectedAccount?.id
     }
 
     var body: some View {
@@ -65,7 +65,32 @@ struct MenuBarView: View {
                 Text("Cloudflare")
                     .font(.headline)
 
-                if let account = viewModel.state.account {
+                if viewModel.state.accounts.count > 1 {
+                    // Show account picker when multiple accounts
+                    Menu {
+                        ForEach(viewModel.state.accounts) { account in
+                            Button(action: { viewModel.selectAccount(account.id) }) {
+                                HStack {
+                                    Text(account.name)
+                                    if account.id == viewModel.state.selectedAccount?.id {
+                                        Image(systemName: "checkmark")
+                                    }
+                                }
+                            }
+                        }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Text(viewModel.state.selectedAccount?.name ?? "Select Account")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Image(systemName: "chevron.up.chevron.down")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .menuStyle(.borderlessButton)
+                    .fixedSize()
+                } else if let account = viewModel.state.selectedAccount {
                     Text(account.name)
                         .font(.caption)
                         .foregroundColor(.secondary)
