@@ -3,6 +3,7 @@ import AppKit
 
 struct MenuBarView: View {
     @ObservedObject var viewModel: CloudflareViewModel
+    @State private var showingProfiles = false
 
     private var accountId: String? {
         viewModel.state.selectedAccount?.id
@@ -53,6 +54,11 @@ struct MenuBarView: View {
             footerView
         }
         .frame(width: 360)
+        .sheet(isPresented: $showingProfiles) {
+            ProfilesView(onProfileChanged: {
+                viewModel.onProfileChanged()
+            })
+        }
     }
 
     private var headerView: some View {
@@ -62,8 +68,24 @@ struct MenuBarView: View {
                 .foregroundColor(.orange)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("Cloudflare")
-                    .font(.headline)
+                HStack(spacing: 6) {
+                    Text("Cloudflare")
+                        .font(.headline)
+
+                    // Profile indicator
+                    if let profile = viewModel.state.activeProfile {
+                        Button(action: { showingProfiles = true }) {
+                            Text(profile.name)
+                                .font(.caption2)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color.accentColor.opacity(0.2))
+                                .cornerRadius(4)
+                        }
+                        .buttonStyle(.plain)
+                        .help("Switch Profile")
+                    }
+                }
 
                 if viewModel.state.accounts.count > 1 {
                     // Show account picker when multiple accounts
@@ -145,15 +167,22 @@ struct MenuBarView: View {
             Text("Not Authenticated")
                 .font(.headline)
 
-            Text("Run `wrangler login` in your terminal to authenticate with Cloudflare.")
+            Text("Run `wrangler login` in your terminal\nor add a profile with an API token.")
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
 
-            Button("Check Again") {
-                viewModel.checkAuthentication()
+            HStack(spacing: 12) {
+                Button("Add Profile") {
+                    showingProfiles = true
+                }
+                .buttonStyle(.borderedProminent)
+
+                Button("Check Again") {
+                    viewModel.checkAuthentication()
+                }
+                .buttonStyle(.bordered)
             }
-            .buttonStyle(.borderedProminent)
         }
         .padding(32)
     }
@@ -190,11 +219,23 @@ struct MenuBarView: View {
 
             Spacer()
 
+            Button(action: { showingProfiles = true }) {
+                Image(systemName: "person.2")
+            }
+            .buttonStyle(.plain)
+            .help("Manage Profiles")
+
             Button(action: viewModel.checkForUpdates) {
-                Image(systemName: "arrow.down.circle")
+                Image(systemName: "arrow.triangle.2.circlepath")
             }
             .buttonStyle(.plain)
             .help("Check for Updates")
+
+            Button(action: viewModel.openWebsite) {
+                Image(systemName: "link")
+            }
+            .buttonStyle(.plain)
+            .help("View on GitHub")
 
             Button(action: viewModel.openDashboard) {
                 Image(systemName: "globe")

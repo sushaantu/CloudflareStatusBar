@@ -36,14 +36,29 @@ class CloudflareViewModel: ObservableObject {
     }
 
     func checkAuthentication() {
-        let credentials = WranglerAuthService.shared.loadCredentials()
+        let credentials = ProfileService.shared.getActiveCredentials()
         state.isAuthenticated = credentials.isAuthenticated
+        state.activeProfile = ProfileService.shared.getActiveProfile()
 
         if state.isAuthenticated {
             Task {
                 await refresh()
             }
         }
+    }
+
+    func onProfileChanged() {
+        // Clear current data and re-authenticate with new profile
+        state.accounts = []
+        state.workers = []
+        state.pagesProjects = []
+        state.kvNamespaces = []
+        state.r2Buckets = []
+        state.d1Databases = []
+        state.queues = []
+        state.error = nil
+
+        checkAuthentication()
     }
 
     func startAutoRefresh() {
@@ -174,6 +189,12 @@ class CloudflareViewModel: ObservableObject {
 
     func openDashboard() {
         if let url = URL(string: "https://dash.cloudflare.com") {
+            NSWorkspace.shared.open(url)
+        }
+    }
+
+    func openWebsite() {
+        if let url = URL(string: "https://github.com/sushaantu/CloudflareStatusBar") {
             NSWorkspace.shared.open(url)
         }
     }

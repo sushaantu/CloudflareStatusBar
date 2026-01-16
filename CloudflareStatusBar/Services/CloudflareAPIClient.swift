@@ -98,7 +98,7 @@ class CloudflareAPIClient {
     }
 
     private func makeRequest<T: Decodable>(endpoint: String, method: String = "GET") async throws -> T {
-        let credentials = WranglerAuthService.shared.loadCredentials()
+        let credentials = ProfileService.shared.getActiveCredentials()
 
         guard let authHeader = credentials.authorizationHeader else {
             throw CloudflareAPIError.notAuthenticated

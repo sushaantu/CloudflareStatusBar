@@ -19,14 +19,29 @@ brew install --cask cloudflare-status-bar
 
 Download the latest release from the [Releases page](https://github.com/sushaantu/CloudflareStatusBar/releases/latest).
 
-## Prerequisites
+## Authentication
 
-The app uses your existing [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/) credentials. If you haven't already:
+The app supports two authentication methods:
+
+### Option 1: Wrangler Login (Simple)
+
+Use your existing [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/) credentials:
 
 ```bash
 npm install -g wrangler
 wrangler login
 ```
+
+### Option 2: API Token Profiles (Multiple Accounts)
+
+If you manage multiple Cloudflare accounts, you can create profiles with API tokens:
+
+1. Click the 👥 icon in the app footer
+2. Click "Add Profile"
+3. Enter a name (e.g., "Personal", "Work") and your API token
+4. Click to switch between profiles
+
+Get your API token from: [Cloudflare Dashboard → My Profile → API Tokens](https://dash.cloudflare.com/profile/api-tokens)
 
 ## Features
 
@@ -36,7 +51,8 @@ wrangler login
 - **R2 Buckets** - View R2 storage buckets with location info
 - **D1 Databases** - Monitor databases with table counts and size
 - **Queues** - Track message queues with producer/consumer counts
-- **Account Switching** - Switch between multiple Cloudflare accounts
+- **Multiple Profiles** - Manage multiple Cloudflare accounts with different API tokens
+- **Account Switching** - Switch between accounts within the same profile
 - **Auto-refresh** every 5 minutes
 - **Deployment notifications** for success/failure
 - **Quick links** to Cloudflare Dashboard
@@ -57,13 +73,15 @@ brew upgrade --cask cloudflare-status-bar
 ## Requirements
 
 - macOS 13.0 (Ventura) or later
-- Wrangler CLI authenticated (`wrangler login`)
+- Either `wrangler login` credentials OR an API token profile
 
 ## Troubleshooting
 
 ### "Not Authenticated" message
 
-Run `wrangler login` in your terminal and restart the app.
+Either:
+- Run `wrangler login` in your terminal and restart the app, OR
+- Click "Add Profile" and add an API token
 
 ### Using API Token with `wrangler login`
 
@@ -110,13 +128,24 @@ Build and run with Xcode (Cmd + R).
 
 ## Credential Locations
 
-The app looks for Wrangler credentials in these locations (in order):
+The app checks credentials in this order:
 
-1. `~/Library/Preferences/.wrangler/config/default.toml`
-2. `~/.wrangler/config/default.toml`
-3. `~/.config/.wrangler/config/default.toml`
-4. `~/.config/wrangler/config/default.toml`
-5. Environment variable: `CLOUDFLARE_API_TOKEN`
+1. **Active Profile** (if set) - API tokens stored securely in macOS Keychain
+2. **Wrangler config files** (if no profile active):
+   - `~/Library/Preferences/.wrangler/config/default.toml`
+   - `~/.wrangler/config/default.toml`
+   - `~/.config/.wrangler/config/default.toml`
+   - `~/.config/wrangler/config/default.toml`
+
+## Footer Icons
+
+| Icon | Action |
+|------|--------|
+| 👥 | Manage Profiles |
+| 🔄 | Check for Updates |
+| 🔗 | View on GitHub |
+| 🌐 | Open Cloudflare Dashboard |
+| ⏻ | Quit |
 
 ## Disclaimer
 

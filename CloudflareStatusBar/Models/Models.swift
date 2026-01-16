@@ -332,10 +332,25 @@ struct QueueConsumer: Codable {
     }
 }
 
+// MARK: - Profile
+
+struct Profile: Codable, Identifiable, Equatable {
+    let id: String
+    var name: String
+    var apiToken: String
+
+    init(id: String = UUID().uuidString, name: String, apiToken: String) {
+        self.id = id
+        self.name = name
+        self.apiToken = apiToken
+    }
+}
+
 // MARK: - App State
 
 struct CloudflareState {
     var isAuthenticated: Bool = false
+    var activeProfile: Profile?
     var isLoading: Bool = false
     var error: String?
     var lastRefresh: Date?
