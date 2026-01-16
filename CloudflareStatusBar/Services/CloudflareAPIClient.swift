@@ -7,12 +7,13 @@ enum CloudflareAPIError: Error, LocalizedError {
     case invalidResponse
     case apiError(String)
     case decodingError(Error)
+    case decodingErrorWithPreview(Error, String)
     case unexpectedContentType(String?, String)
 
     var errorDescription: String? {
         switch self {
         case .notAuthenticated:
-            return "Not authenticated. Run 'wrangler login' in Terminal."
+            return "Not authenticated. Run 'wrangler login' in Terminal or add a profile."
         case .tokenExpired:
             return "Session expired. Run 'wrangler login' in Terminal to re-authenticate."
         case .networkError(let error):
@@ -23,6 +24,8 @@ enum CloudflareAPIError: Error, LocalizedError {
             return "API error: \(message)"
         case .decodingError(let error):
             return "Failed to decode response: \(error.localizedDescription)"
+        case .decodingErrorWithPreview(_, let preview):
+            return "Failed to parse API response. This may be caused by a proxy or firewall. Response preview: \(preview)"
         case .unexpectedContentType(let contentType, let preview):
             return "Unexpected response format (received \(contentType ?? "unknown")). This may be caused by a proxy or firewall. Preview: \(preview)"
         }
@@ -114,30 +117,37 @@ class CloudflareAPIClient {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
 
+        let data: Data
+        let response: URLResponse
+
         do {
-            let (data, response) = try await session.data(for: request)
+            (data, response) = try await session.data(for: request)
+        } catch {
+            throw CloudflareAPIError.networkError(error)
+        }
 
-            guard let httpResponse = response as? HTTPURLResponse else {
-                throw CloudflareAPIError.invalidResponse
-            }
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw CloudflareAPIError.invalidResponse
+        }
 
-            if httpResponse.statusCode == 401 {
-                throw CloudflareAPIError.notAuthenticated
-            }
+        if httpResponse.statusCode == 401 {
+            throw CloudflareAPIError.notAuthenticated
+        }
 
-            // Validate Content-Type before attempting to decode
-            let contentType = httpResponse.value(forHTTPHeaderField: "Content-Type")
-            let isJSON = contentType?.lowercased().contains("application/json") ?? false
+        // Validate Content-Type before attempting to decode
+        let contentType = httpResponse.value(forHTTPHeaderField: "Content-Type")
+        let isJSON = contentType?.lowercased().contains("application/json") ?? false
 
-            if !isJSON {
-                // Response is not JSON - likely a proxy/firewall HTML page
-                let preview = String(data: data.prefix(200), encoding: .utf8) ?? "<binary data>"
-                throw CloudflareAPIError.unexpectedContentType(contentType, preview)
-            }
+        if !isJSON {
+            // Response is not JSON - likely a proxy/firewall HTML page
+            let preview = String(data: data.prefix(200), encoding: .utf8) ?? "<binary data>"
+            throw CloudflareAPIError.unexpectedContentType(contentType, preview)
+        }
 
-            let decoder = JSONDecoder()
-            decoder.dateDecodingStrategy = .iso8601
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
 
+        do {
             let apiResponse = try decoder.decode(CloudflareAPIResponse<T>.self, from: data)
 
             if !apiResponse.success {
@@ -157,7 +167,9 @@ class CloudflareAPIClient {
         } catch let error as CloudflareAPIError {
             throw error
         } catch let error as DecodingError {
-            throw CloudflareAPIError.decodingError(error)
+            // Include data preview for debugging
+            let preview = String(data: data.prefix(300), encoding: .utf8) ?? "<binary data>"
+            throw CloudflareAPIError.decodingErrorWithPreview(error, preview)
         } catch {
             throw CloudflareAPIError.networkError(error)
         }
