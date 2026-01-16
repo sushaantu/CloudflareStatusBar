@@ -36,6 +36,7 @@ wrangler login
 - **R2 Buckets** - View R2 storage buckets with location info
 - **D1 Databases** - Monitor databases with table counts and size
 - **Queues** - Track message queues with producer/consumer counts
+- **Account Switching** - Switch between multiple Cloudflare accounts
 - **Auto-refresh** every 5 minutes
 - **Deployment notifications** for success/failure
 - **Quick links** to Cloudflare Dashboard
@@ -64,9 +65,38 @@ brew upgrade --cask cloudflare-status-bar
 
 Run `wrangler login` in your terminal and restart the app.
 
+### Using API Token with `wrangler login`
+
+If you have `CLOUDFLARE_API_TOKEN` set in your environment (e.g., in `.envrc`, `.bashrc`, or `.zshrc`) and get an error when running `wrangler login`:
+
+```
+✘ [ERROR] You are logged in with an API Token. Unset the CLOUDFLARE_API_TOKEN in the environment to log in via OAuth.
+```
+
+Temporarily unset it to authenticate:
+
+```bash
+unset CLOUDFLARE_API_TOKEN && wrangler login
+```
+
+This creates an OAuth token that the app can use. Your API token will still work for CLI usage when the environment variable is set.
+
+### Environment variables not working
+
+macOS GUI apps (like this menu bar app) cannot read shell environment variables set in `.bashrc`, `.zshrc`, or `.envrc`. The app reads credentials from:
+
+1. Wrangler config files (created by `wrangler login`) - **Recommended**
+2. System-level environment variables set via `launchctl setenv`
+
+For most users, `wrangler login` is the simplest solution.
+
 ### API errors
 
 Ensure your Cloudflare account has access to the resources you're trying to view. Some features (R2, D1, Queues) may require specific account permissions.
+
+### Decoding errors / Proxy issues
+
+If you see "Unexpected response format" errors, a proxy or firewall may be intercepting requests. The error message will show a preview of what was received. Check your network configuration or try from a different network.
 
 ## Building from Source
 
