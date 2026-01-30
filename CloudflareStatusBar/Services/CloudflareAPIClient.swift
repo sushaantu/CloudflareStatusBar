@@ -89,6 +89,7 @@ struct R2BucketsResponse: Decodable {
 
 class CloudflareAPIClient {
     static let shared = CloudflareAPIClient()
+    static let diagnosticsEnabledKey = "diagnosticsEnabled"
 
     private let baseURL = "https://api.cloudflare.com/client/v4"
     private let session: URLSession
@@ -98,6 +99,87 @@ class CloudflareAPIClient {
         config.timeoutIntervalForRequest = 30
         config.timeoutIntervalForResource = 60
         session = URLSession(configuration: config)
+    }
+
+    private static func normalizeFractionalSeconds(_ dateString: String) -> String? {
+        guard let dotIndex = dateString.firstIndex(of: ".") else { return nil }
+        let fractionStart = dateString.index(after: dotIndex)
+        guard let zoneIndex = dateString[fractionStart...].firstIndex(where: { $0 == "Z" || $0 == "+" || $0 == "-" }) else {
+            return nil
+        }
+        let fraction = dateString[fractionStart..<zoneIndex]
+        guard !fraction.isEmpty else { return nil }
+        let trimmed = String(fraction.prefix(3))
+        let padded = trimmed.padding(toLength: 3, withPad: "0", startingAt: 0)
+        let prefix = String(dateString[..<fractionStart])
+        let suffix = String(dateString[zoneIndex...])
+        return prefix + padded + suffix
+    }
+
+    @discardableResult
+    private static func logDecodingFailure(
+        endpoint: String,
+        data: Data,
+        response: HTTPURLResponse?,
+        error: Error
+    ) -> URL? {
+        guard UserDefaults.standard.bool(forKey: diagnosticsEnabledKey) else { return nil }
+        guard let logURL = diagnosticsLogURL() else { return nil }
+
+        let timestampFormatter = ISO8601DateFormatter()
+        timestampFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+
+        let previewData = data.prefix(300)
+        let previewText = String(data: previewData, encoding: .utf8) ?? "<binary data>"
+        let previewBase64 = previewData.base64EncodedString()
+        let statusCode = response?.statusCode ?? -1
+        let contentType = response?.value(forHTTPHeaderField: "Content-Type") ?? "unknown"
+
+        let entry = """
+        -----
+        Time: \(timestampFormatter.string(from: Date()))
+        Endpoint: \(endpoint)
+        Status: \(statusCode)
+        Content-Type: \(contentType)
+        Error: \(error)
+        Preview(utf8): \(previewText)
+        Preview(base64): \(previewBase64)
+
+        """
+
+        appendDiagnostics(entry, to: logURL)
+        return logURL
+    }
+
+    static func diagnosticsLogURL() -> URL? {
+        let fileManager = FileManager.default
+        guard let baseURL = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
+            return nil
+        }
+        let folderName = Bundle.main.bundleIdentifier ?? "CloudflareStatusBar"
+        let folderURL = baseURL.appendingPathComponent(folderName, isDirectory: true)
+        do {
+            try fileManager.createDirectory(at: folderURL, withIntermediateDirectories: true)
+        } catch {
+            return nil
+        }
+        return folderURL.appendingPathComponent("diagnostics.log")
+    }
+
+    private static func appendDiagnostics(_ entry: String, to url: URL) {
+        let data = Data(entry.utf8)
+        if FileManager.default.fileExists(atPath: url.path) {
+            do {
+                let handle = try FileHandle(forWritingTo: url)
+                try handle.seekToEnd()
+                try handle.write(contentsOf: data)
+                try handle.close()
+            } catch {
+                // Diagnostics should never break the main flow.
+            }
+        } else {
+            try? data.write(to: url, options: .atomic)
+        }
     }
 
     private func makeRequest<T: Decodable>(endpoint: String, method: String = "GET") async throws -> T {
@@ -145,7 +227,26 @@ class CloudflareAPIClient {
         }
 
         let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
+        decoder.dateDecodingStrategy = .custom { @Sendable decoder in
+            let container = try decoder.singleValueContainer()
+            let dateString = try container.decode(String.self)
+            let fractionalFormatter = ISO8601DateFormatter()
+            fractionalFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            let standardFormatter = ISO8601DateFormatter()
+            standardFormatter.formatOptions = [.withInternetDateTime]
+
+            if let date = fractionalFormatter.date(from: dateString) {
+                return date
+            }
+            if let normalized = Self.normalizeFractionalSeconds(dateString),
+               let date = fractionalFormatter.date(from: normalized) {
+                return date
+            }
+            if let date = standardFormatter.date(from: dateString) {
+                return date
+            }
+            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid date: \(dateString)")
+        }
 
         do {
             let apiResponse = try decoder.decode(CloudflareAPIResponse<T>.self, from: data)
@@ -169,6 +270,10 @@ class CloudflareAPIClient {
         } catch let error as DecodingError {
             // Include data preview for debugging
             let preview = String(data: data.prefix(300), encoding: .utf8) ?? "<binary data>"
+            if let logURL = Self.logDecodingFailure(endpoint: endpoint, data: data, response: httpResponse, error: error) {
+                let previewWithLog = "\(preview)\nDiagnostics log: \(logURL.path)"
+                throw CloudflareAPIError.decodingErrorWithPreview(error, previewWithLog)
+            }
             throw CloudflareAPIError.decodingErrorWithPreview(error, preview)
         } catch {
             throw CloudflareAPIError.networkError(error)

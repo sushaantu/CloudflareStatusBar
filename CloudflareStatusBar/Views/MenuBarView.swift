@@ -4,6 +4,7 @@ import AppKit
 struct MenuBarView: View {
     @ObservedObject var viewModel: CloudflareViewModel
     @State private var showingProfiles = false
+    @AppStorage(CloudflareAPIClient.diagnosticsEnabledKey) private var diagnosticsEnabled = false
 
     private var accountId: String? {
         viewModel.state.selectedAccount?.id
@@ -201,6 +202,19 @@ struct MenuBarView: View {
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
 
+            if diagnosticsEnabled, let logURL = CloudflareAPIClient.diagnosticsLogURL() {
+                Button("Reveal Diagnostics Log") {
+                    NSWorkspace.shared.activateFileViewerSelecting([logURL])
+                }
+                .buttonStyle(.bordered)
+
+                Text(logURL.path)
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .textSelection(.enabled)
+            }
+
             Button("Retry") {
                 Task { await viewModel.refresh() }
             }
@@ -230,6 +244,12 @@ struct MenuBarView: View {
             }
             .buttonStyle(.plain)
             .help("Check for Updates")
+
+            Button(action: { diagnosticsEnabled.toggle() }) {
+                Image(systemName: diagnosticsEnabled ? "ladybug.fill" : "ladybug")
+            }
+            .buttonStyle(.plain)
+            .help(diagnosticsEnabled ? "Diagnostics Logging On" : "Diagnostics Logging Off")
 
             Button(action: viewModel.openWebsite) {
                 Image(systemName: "link")
