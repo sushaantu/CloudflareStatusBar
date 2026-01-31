@@ -92,6 +92,7 @@ class CloudflareAPIClient {
     static let diagnosticsEnabledKey = "diagnosticsEnabled"
 
     private let baseURL = "https://api.cloudflare.com/client/v4"
+    private let graphQLURL = "https://api.cloudflare.com/client/v4/graphql"
     private let session: URLSession
 
     private init() {
@@ -183,7 +184,7 @@ class CloudflareAPIClient {
     }
 
     private func makeRequest<T: Decodable>(endpoint: String, method: String = "GET") async throws -> T {
-        let credentials = ProfileService.shared.getActiveCredentials()
+        let credentials = await ProfileService.shared.getActiveCredentialsAsync()
 
         guard let authHeader = credentials.authorizationHeader else {
             throw CloudflareAPIError.notAuthenticated
@@ -280,6 +281,80 @@ class CloudflareAPIClient {
         }
     }
 
+    private func makeGraphQLRequest<T: Decodable, V: Encodable>(query: String, variables: V) async throws -> T {
+        let credentials = await ProfileService.shared.getActiveCredentialsAsync()
+
+        guard let authHeader = credentials.authorizationHeader else {
+            throw CloudflareAPIError.notAuthenticated
+        }
+
+        guard let url = URL(string: graphQLURL) else {
+            throw CloudflareAPIError.invalidResponse
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue(authHeader, forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+
+        let body = GraphQLRequest(query: query, variables: variables)
+        request.httpBody = try JSONEncoder().encode(body)
+
+        let data: Data
+        let response: URLResponse
+
+        do {
+            (data, response) = try await session.data(for: request)
+        } catch {
+            throw CloudflareAPIError.networkError(error)
+        }
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw CloudflareAPIError.invalidResponse
+        }
+
+        if httpResponse.statusCode == 401 {
+            throw CloudflareAPIError.notAuthenticated
+        }
+
+        let contentType = httpResponse.value(forHTTPHeaderField: "Content-Type")
+        let isJSON = contentType?.lowercased().contains("application/json") ?? false
+
+        if !isJSON {
+            let preview = String(data: data.prefix(200), encoding: .utf8) ?? "<binary data>"
+            throw CloudflareAPIError.unexpectedContentType(contentType, preview)
+        }
+
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+
+        do {
+            let graphQLResponse = try decoder.decode(GraphQLResponse<T>.self, from: data)
+
+            if let errors = graphQLResponse.errors, !errors.isEmpty {
+                let message = errors.map { $0.message }.joined(separator: ", ")
+                if CloudflareAPIError.isAuthError(message) {
+                    throw CloudflareAPIError.tokenExpired
+                }
+                throw CloudflareAPIError.apiError(message)
+            }
+
+            guard let result = graphQLResponse.data else {
+                throw CloudflareAPIError.invalidResponse
+            }
+
+            return result
+        } catch let error as CloudflareAPIError {
+            throw error
+        } catch let error as DecodingError {
+            let preview = String(data: data.prefix(300), encoding: .utf8) ?? "<binary data>"
+            throw CloudflareAPIError.decodingErrorWithPreview(error, preview)
+        } catch {
+            throw CloudflareAPIError.networkError(error)
+        }
+    }
+
     // MARK: - Account
 
     func getAccounts() async throws -> [Account] {
@@ -334,4 +409,235 @@ class CloudflareAPIClient {
     func getQueues(accountId: String) async throws -> [Queue] {
         try await makeRequest(endpoint: "/accounts/\(accountId)/queues")
     }
+
+    // MARK: - Usage Metrics
+
+    func getUsageMetrics(accountId: String) async throws -> UsageMetrics {
+        let (dateString, datetimeStart, datetimeEnd, periodStart, periodEnd) = Self.usageDateRangeUTC()
+
+        let query = """
+        query AccountUsage($accountTag: string!, $startDate: Date, $endDate: Date, $datetimeStart: string, $datetimeEnd: string) {
+          viewer {
+            accounts(filter: { accountTag: $accountTag }) {
+              workersInvocationsAdaptive(
+                limit: 10000
+                filter: { datetime_geq: $datetimeStart, datetime_leq: $datetimeEnd }
+              ) {
+                sum {
+                  requests
+                }
+              }
+              kvOperationsAdaptiveGroups(
+                limit: 10000
+                filter: { date_geq: $startDate, date_leq: $endDate }
+              ) {
+                sum {
+                  requests
+                }
+                dimensions {
+                  actionType
+                }
+              }
+              d1AnalyticsAdaptiveGroups(
+                limit: 10000
+                filter: { date_geq: $startDate, date_leq: $endDate }
+              ) {
+                sum {
+                  readQueries
+                  writeQueries
+                  rowsRead
+                  rowsWritten
+                }
+              }
+            }
+          }
+        }
+        """
+
+        let variables = UsageQueryVariables(
+            accountTag: accountId,
+            startDate: dateString,
+            endDate: dateString,
+            datetimeStart: datetimeStart,
+            datetimeEnd: datetimeEnd
+        )
+
+        let data: AccountUsageGraphQLData = try await makeGraphQLRequest(query: query, variables: variables)
+        guard let account = data.viewer.accounts.first else {
+            throw CloudflareAPIError.invalidResponse
+        }
+
+        let workersRequests = Self.sumRequests(account.workersInvocationsAdaptive)
+
+        var kvReads: Int64?
+        var kvWrites: Int64?
+        var kvDeletes: Int64?
+        var kvLists: Int64?
+
+        if let kvGroups = account.kvOperationsAdaptiveGroups {
+            var reads: Int64 = 0
+            var writes: Int64 = 0
+            var deletes: Int64 = 0
+            var lists: Int64 = 0
+
+            for group in kvGroups {
+                let count = group.sum?.requests ?? 0
+                switch group.dimensions?.actionType?.lowercased() {
+                case "read":
+                    reads += count
+                case "write":
+                    writes += count
+                case "delete":
+                    deletes += count
+                case "list":
+                    lists += count
+                default:
+                    break
+                }
+            }
+
+            kvReads = reads
+            kvWrites = writes
+            kvDeletes = deletes
+            kvLists = lists
+        }
+
+        var d1ReadQueries: Int64?
+        var d1WriteQueries: Int64?
+        var d1RowsRead: Int64?
+        var d1RowsWritten: Int64?
+
+        if let d1Groups = account.d1AnalyticsAdaptiveGroups {
+            var readQueries: Int64 = 0
+            var writeQueries: Int64 = 0
+            var rowsRead: Int64 = 0
+            var rowsWritten: Int64 = 0
+
+            for group in d1Groups {
+                readQueries += group.sum?.readQueries ?? 0
+                writeQueries += group.sum?.writeQueries ?? 0
+                rowsRead += group.sum?.rowsRead ?? 0
+                rowsWritten += group.sum?.rowsWritten ?? 0
+            }
+
+            d1ReadQueries = readQueries
+            d1WriteQueries = writeQueries
+            d1RowsRead = rowsRead
+            d1RowsWritten = rowsWritten
+        }
+
+        return UsageMetrics(
+            workersRequests: workersRequests,
+            kvReads: kvReads,
+            kvWrites: kvWrites,
+            kvDeletes: kvDeletes,
+            kvLists: kvLists,
+            d1ReadQueries: d1ReadQueries,
+            d1WriteQueries: d1WriteQueries,
+            d1RowsRead: d1RowsRead,
+            d1RowsWritten: d1RowsWritten,
+            periodStart: periodStart,
+            periodEnd: periodEnd,
+            lastUpdated: Date()
+        )
+    }
+
+    private static func sumRequests(_ rows: [WorkersInvocationsRow]?) -> Int64? {
+        guard let rows = rows else { return nil }
+        return rows.reduce(0) { $0 + ($1.sum?.requests ?? 0) }
+    }
+
+    private static func usageDateRangeUTC() -> (String, String, String, Date, Date) {
+        var calendar = Calendar(identifier: .gregorian)
+        let utc = TimeZone(secondsFromGMT: 0) ?? TimeZone(abbreviation: "GMT")!
+        calendar.timeZone = utc
+
+        let now = Date()
+        let startOfDay = calendar.startOfDay(for: now)
+
+        let dateFormatter = DateFormatter()
+        dateFormatter.calendar = calendar
+        dateFormatter.timeZone = utc
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+
+        let isoFormatter = ISO8601DateFormatter()
+        isoFormatter.timeZone = utc
+        isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+
+        let dateString = dateFormatter.string(from: startOfDay)
+        let datetimeStart = isoFormatter.string(from: startOfDay)
+        let datetimeEnd = isoFormatter.string(from: now)
+
+        return (dateString, datetimeStart, datetimeEnd, startOfDay, now)
+    }
+}
+
+// MARK: - GraphQL Models
+
+struct GraphQLRequest<V: Encodable>: Encodable {
+    let query: String
+    let variables: V
+}
+
+struct GraphQLResponse<T: Decodable>: Decodable {
+    let data: T?
+    let errors: [GraphQLError]?
+}
+
+struct GraphQLError: Decodable {
+    let message: String
+}
+
+struct UsageQueryVariables: Encodable {
+    let accountTag: String
+    let startDate: String
+    let endDate: String
+    let datetimeStart: String
+    let datetimeEnd: String
+}
+
+struct AccountUsageGraphQLData: Decodable {
+    let viewer: AccountUsageViewer
+}
+
+struct AccountUsageViewer: Decodable {
+    let accounts: [AccountUsageAccount]
+}
+
+struct AccountUsageAccount: Decodable {
+    let workersInvocationsAdaptive: [WorkersInvocationsRow]?
+    let kvOperationsAdaptiveGroups: [KVOperationsGroup]?
+    let d1AnalyticsAdaptiveGroups: [D1AnalyticsGroup]?
+}
+
+struct WorkersInvocationsRow: Decodable {
+    let sum: WorkersInvocationsSum?
+}
+
+struct WorkersInvocationsSum: Decodable {
+    let requests: Int64?
+}
+
+struct KVOperationsGroup: Decodable {
+    let sum: KVOperationsSum?
+    let dimensions: KVOperationsDimensions?
+}
+
+struct KVOperationsSum: Decodable {
+    let requests: Int64?
+}
+
+struct KVOperationsDimensions: Decodable {
+    let actionType: String?
+}
+
+struct D1AnalyticsGroup: Decodable {
+    let sum: D1AnalyticsSum?
+}
+
+struct D1AnalyticsSum: Decodable {
+    let readQueries: Int64?
+    let writeQueries: Int64?
+    let rowsRead: Int64?
+    let rowsWritten: Int64?
 }

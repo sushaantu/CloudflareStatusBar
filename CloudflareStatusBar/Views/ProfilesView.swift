@@ -186,8 +186,12 @@ struct ProfilesView: View {
     }
 
     private func loadProfiles() {
-        profiles = ProfileService.shared.getProfiles()
-        activeProfileId = ProfileService.shared.getActiveProfileId()
+        Task {
+            let profiles = await ProfileService.shared.getProfilesAsync()
+            let activeProfileId = ProfileService.shared.getActiveProfileId()
+            self.profiles = profiles
+            self.activeProfileId = activeProfileId
+        }
     }
 
     private func setActiveProfile(_ id: String?) {

@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 
-class AppDelegate: NSObject, NSApplicationDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     private var statusItem: NSStatusItem!
     private var popover: NSPopover!
     private var viewModel: CloudflareViewModel!
@@ -22,10 +22,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         popover.contentSize = NSSize(width: 360, height: 480)
         popover.behavior = .transient
         popover.animates = true
+        popover.delegate = self
         popover.contentViewController = NSHostingController(rootView: MenuBarView(viewModel: viewModel))
 
         NotificationService.shared.requestPermission()
-        viewModel.startAutoRefresh()
     }
 
     @objc private func togglePopover() {
@@ -40,6 +40,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        viewModel.stopAutoRefresh()
+    }
+
+    func popoverWillShow(_ notification: Notification) {
+        viewModel.startAutoRefresh()
+        viewModel.requestRefresh()
+    }
+
+    func popoverDidClose(_ notification: Notification) {
         viewModel.stopAutoRefresh()
     }
 }

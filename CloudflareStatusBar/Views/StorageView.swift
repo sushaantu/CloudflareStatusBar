@@ -239,6 +239,11 @@ struct D1DatabaseRow: View {
     let accountId: String?
 
     @State private var isHovered = false
+    private static let byteFormatter: ByteCountFormatter = {
+        let formatter = ByteCountFormatter()
+        formatter.countStyle = .file
+        return formatter
+    }()
 
     var body: some View {
         Button(action: openInDashboard) {
@@ -289,9 +294,7 @@ struct D1DatabaseRow: View {
     }
 
     private func formatBytes(_ bytes: Int) -> String {
-        let formatter = ByteCountFormatter()
-        formatter.countStyle = .file
-        return formatter.string(fromByteCount: Int64(bytes))
+        Self.byteFormatter.string(fromByteCount: Int64(bytes))
     }
 
     private func openInDashboard() {

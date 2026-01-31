@@ -9,6 +9,20 @@ class ProfileService {
 
     private init() {}
 
+    // MARK: - Async helpers
+
+    func getProfilesAsync() async -> [Profile] {
+        await runBackground { self.getProfiles() }
+    }
+
+    func getActiveProfileAsync() async -> Profile? {
+        await runBackground { self.getActiveProfile() }
+    }
+
+    func getActiveCredentialsAsync() async -> WranglerCredentials {
+        await runBackground { self.getActiveCredentials() }
+    }
+
     // MARK: - Profile Management
 
     func getProfiles() -> [Profile] {
@@ -89,23 +103,34 @@ class ProfileService {
     var isUsingProfiles: Bool {
         getActiveProfile() != nil
     }
+
+    private func runBackground<T>(_ work: @escaping () -> T) async -> T {
+        await withCheckedContinuation { continuation in
+            DispatchQueue.global(qos: .userInitiated).async {
+                continuation.resume(returning: work())
+            }
+        }
+    }
 }
 
 // MARK: - Keychain Helper
 
 private enum KeychainHelper {
     static func save(key: String, data: Data) {
-        let query: [String: Any] = [
+        var query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
-            kSecAttrAccount as String: key,
+            kSecAttrAccount as String: key
+        ]
+
+        let update: [String: Any] = [
             kSecValueData as String: data
         ]
 
-        // Delete existing item first
-        SecItemDelete(query as CFDictionary)
-
-        // Add new item
-        SecItemAdd(query as CFDictionary, nil)
+        let status = SecItemUpdate(query as CFDictionary, update as CFDictionary)
+        if status == errSecItemNotFound {
+            query[kSecValueData as String] = data
+            SecItemAdd(query as CFDictionary, nil)
+        }
     }
 
     static func load(key: String) -> Data? {

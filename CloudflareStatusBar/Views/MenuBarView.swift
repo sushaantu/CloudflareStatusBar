@@ -126,7 +126,7 @@ struct MenuBarView: View {
                 ProgressView()
                     .scaleEffect(0.7)
             } else {
-                Button(action: { Task { await viewModel.refresh() } }) {
+                Button(action: { viewModel.requestRefresh() }) {
                     Image(systemName: "arrow.clockwise")
                 }
                 .buttonStyle(.plain)
@@ -216,7 +216,7 @@ struct MenuBarView: View {
             }
 
             Button("Retry") {
-                Task { await viewModel.refresh() }
+                viewModel.requestRefresh()
             }
             .buttonStyle(.borderedProminent)
         }
@@ -286,16 +286,25 @@ struct OverviewView: View {
                 .fontWeight(.semibold)
                 .foregroundColor(.secondary)
 
-            if recentActivity.isEmpty {
+            if viewModel.state.recentActivity.isEmpty {
                 Text("No recent activity")
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.vertical, 20)
             } else {
-                ForEach(recentActivity.prefix(8), id: \.id) { item in
+                ForEach(viewModel.state.recentActivity.prefix(8), id: \.id) { item in
                     ActivityRow(item: item, accountId: accountId)
                 }
+            }
+
+            Text(usageHeaderLine)
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundColor(.secondary)
+
+            if let usage = viewModel.state.usageMetrics, usage.hasAnyMetric {
+                UsageMetricsView(usage: usage)
             }
 
             // Compact summary at bottom
@@ -309,66 +318,184 @@ struct OverviewView: View {
         .padding()
     }
 
-    private var recentActivity: [ActivityItem] {
-        var items: [ActivityItem] = []
+    private var usageHeaderLine: String {
+        var parts = ["Usage (UTC)"]
 
-        // Add workers with modification dates
-        for worker in viewModel.state.workers {
-            items.append(ActivityItem(
-                id: "worker-\(worker.id)",
-                name: worker.name,
-                type: .worker,
-                date: worker.modifiedOn ?? worker.createdOn,
-                status: nil,
-                subtitle: nil,
-                url: nil
-            ))
+        if let usage = viewModel.state.usageMetrics, usage.hasAnyMetric {
+            return parts.joined(separator: " · ")
         }
 
-        // Add pages projects with their latest deployment info
-        for project in viewModel.state.pagesProjects {
-            let deployment = project.latestDeployment
-            items.append(ActivityItem(
-                id: "pages-\(project.id)",
-                name: project.name,
-                type: .pages,
-                date: deployment?.createdOn ?? project.modifiedOn,
-                status: deployment?.status,
-                subtitle: deployment?.deploymentTrigger?.metadata?.branch,
-                url: deployment?.url
-            ))
+        if viewModel.state.isLoading {
+            parts.append("Loading…")
+            return parts.joined(separator: " · ")
         }
 
-        // Sort by most recent
-        return items.sorted { ($0.date ?? .distantPast) > ($1.date ?? .distantPast) }
+        if let usageError = viewModel.state.usageError {
+            parts.append(compactUsageError(usageError))
+            return parts.joined(separator: " · ")
+        }
+
+        parts.append("Unavailable")
+        return parts.joined(separator: " · ")
+    }
+
+    private func compactUsageError(_ message: String) -> String {
+        let lowercased = message.lowercased()
+
+        if lowercased.contains("permission") {
+            return "No analytics permission"
+        }
+        if lowercased.contains("session") || lowercased.contains("auth") {
+            return "Not authenticated"
+        }
+        if lowercased.contains("unavailable") {
+            return "Unavailable"
+        }
+        return message
+    }
+
+}
+
+struct UsageMetricsView: View {
+    let usage: UsageMetrics
+    private static let numberFormatter: NumberFormatter = {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.maximumFractionDigits = 0
+        return formatter
+    }()
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            UsageMetricRow(
+                icon: "server.rack",
+                title: "Workers Requests",
+                value: formatCount(usage.workersRequests),
+                detail: nil
+            )
+
+            UsageMetricRow(
+                icon: "key",
+                title: "KV Reads / Writes",
+                value: formatPair(usage.kvReads, usage.kvWrites),
+                detail: kvExtras
+            )
+
+            UsageMetricRow(
+                icon: "cylinder",
+                title: "D1 Rows Read / Written",
+                value: formatPair(usage.d1RowsRead, usage.d1RowsWritten),
+                detail: nil
+            )
+        }
+    }
+
+    private var kvExtras: String? {
+        var parts: [String] = []
+        if let deletes = usage.kvDeletes, deletes > 0 {
+            parts.append("Del \(formatCount(deletes))")
+        }
+        if let lists = usage.kvLists, lists > 0 {
+            parts.append("List \(formatCount(lists))")
+        }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+    }
+
+    private func formatPair(_ first: Int64?, _ second: Int64?) -> String {
+        if first == nil && second == nil {
+            return "—"
+        }
+        return "\(formatCount(first)) / \(formatCount(second))"
+    }
+
+    private func formatCount(_ value: Int64?) -> String {
+        guard let value = value else { return "—" }
+        return formatCompact(value)
+    }
+
+    private func formatCompact(_ value: Int64) -> String {
+        let absValue = Double(abs(value))
+        let sign = value < 0 ? "-" : ""
+
+        switch absValue {
+        case 1_000_000_000...:
+            return sign + compact(absValue, divisor: 1_000_000_000, suffix: "B")
+        case 1_000_000...:
+            return sign + compact(absValue, divisor: 1_000_000, suffix: "M")
+        case 1_000...:
+            return sign + compact(absValue, divisor: 1_000, suffix: "k")
+        default:
+            return sign + formatNumber(absValue)
+        }
+    }
+
+    private func compact(_ value: Double, divisor: Double, suffix: String) -> String {
+        let scaled = value / divisor
+        let format = scaled >= 10 ? "%.0f" : "%.1f"
+        var text = String(format: format, scaled)
+        if text.hasSuffix(".0") {
+            text.removeLast(2)
+        }
+        return text + suffix
+    }
+
+    private func formatNumber(_ value: Double) -> String {
+        Self.numberFormatter.string(from: NSNumber(value: value)) ?? "\(Int(value))"
+    }
+
+}
+
+struct UsageMetricRow: View {
+    let icon: String
+    let title: String
+    let value: String
+    let detail: String?
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Image(systemName: icon)
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .frame(width: 16)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundColor(.primary)
+
+                if let detail = detail {
+                    Text(detail)
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+            }
+
+            Spacer()
+
+            Text(value)
+                .font(.caption)
+                .fontWeight(.semibold)
+        }
+        .padding(.vertical, 6)
+        .padding(.horizontal, 8)
+        .background(Color(nsColor: .controlBackgroundColor))
+        .cornerRadius(6)
     }
 }
 
-struct ActivityItem {
-    let id: String
-    let name: String
-    let type: ActivityType
-    let date: Date?
-    let status: DeploymentStatus?
-    let subtitle: String?
-    let url: String?
-
-    enum ActivityType {
-        case worker
-        case pages
-
-        var icon: String {
-            switch self {
-            case .worker: return "server.rack"
-            case .pages: return "doc.richtext"
-            }
+extension ActivityType {
+    var icon: String {
+        switch self {
+        case .worker: return "server.rack"
+        case .pages: return "doc.richtext"
         }
+    }
 
-        var color: Color {
-            switch self {
-            case .worker: return .blue
-            case .pages: return .purple
-            }
+    var color: Color {
+        switch self {
+        case .worker: return .blue
+        case .pages: return .purple
         }
     }
 }

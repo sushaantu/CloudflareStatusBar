@@ -239,6 +239,23 @@ enum DeploymentStatus: String, Codable {
     }
 }
 
+// MARK: - Recent Activity
+
+enum ActivityType: String, Codable {
+    case worker
+    case pages
+}
+
+struct ActivityItem: Identifiable {
+    let id: String
+    let name: String
+    let type: ActivityType
+    let date: Date?
+    let status: DeploymentStatus?
+    let subtitle: String?
+    let url: String?
+}
+
 // MARK: - KV Namespace
 
 struct KVNamespace: Codable, Identifiable {
@@ -332,6 +349,45 @@ struct QueueConsumer: Codable {
     }
 }
 
+// MARK: - Usage Metrics
+
+struct UsageMetrics {
+    let workersRequests: Int64?
+    let kvReads: Int64?
+    let kvWrites: Int64?
+    let kvDeletes: Int64?
+    let kvLists: Int64?
+    let d1ReadQueries: Int64?
+    let d1WriteQueries: Int64?
+    let d1RowsRead: Int64?
+    let d1RowsWritten: Int64?
+    let periodStart: Date?
+    let periodEnd: Date?
+    let lastUpdated: Date?
+
+    var metricValues: [Int64?] {
+        [
+            workersRequests,
+            kvReads,
+            kvWrites,
+            kvDeletes,
+            kvLists,
+            d1ReadQueries,
+            d1WriteQueries,
+            d1RowsRead,
+            d1RowsWritten
+        ]
+    }
+
+    var hasAnyMetric: Bool {
+        metricValues.contains { $0 != nil }
+    }
+
+    var allMetricsZero: Bool {
+        hasAnyMetric && metricValues.compactMap { $0 }.allSatisfy { $0 == 0 }
+    }
+}
+
 // MARK: - Profile
 
 struct Profile: Codable, Identifiable, Equatable {
@@ -354,6 +410,8 @@ struct CloudflareState {
     var isLoading: Bool = false
     var error: String?
     var lastRefresh: Date?
+    var usageError: String?
+    var recentActivity: [ActivityItem] = []
 
     var accounts: [Account] = []
     var selectedAccountId: String?
@@ -363,6 +421,7 @@ struct CloudflareState {
     var r2Buckets: [R2Bucket] = []
     var d1Databases: [D1Database] = []
     var queues: [Queue] = []
+    var usageMetrics: UsageMetrics?
 
     // Track deployment states for notifications
     var previousDeploymentStates: [String: DeploymentStatus] = [:]
