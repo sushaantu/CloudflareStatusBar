@@ -1,3 +1,4 @@
+import Darwin
 import Foundation
 
 struct WranglerCredentials {
@@ -25,7 +26,7 @@ class WranglerAuthService {
     private init() {}
 
     func loadCredentials() -> WranglerCredentials {
-        let homeDir = FileManager.default.homeDirectoryForCurrentUser
+        let homeDir = Self.realHomeDirectory()
 
         // Try multiple possible locations for wrangler config
         let possiblePaths = [
@@ -50,6 +51,15 @@ class WranglerAuthService {
             apiToken: envToken,
             accountId: envAccountId
         )
+    }
+
+    private static func realHomeDirectory() -> URL {
+        guard let passwd = getpwuid(getuid()),
+              let homePath = passwd.pointee.pw_dir else {
+            return FileManager.default.homeDirectoryForCurrentUser
+        }
+
+        return URL(fileURLWithPath: String(cString: homePath), isDirectory: true)
     }
 
     private func parseWranglerConfig(at url: URL) -> WranglerCredentials? {
