@@ -28,6 +28,7 @@ Carthage/Build/
 
 # Archives
 *.xcarchive
+dist/
 
 # Playgrounds
 timeline.xctimeline

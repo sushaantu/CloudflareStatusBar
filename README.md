@@ -70,6 +70,40 @@ Get your API token from: [Cloudflare Dashboard → My Profile → API Tokens](ht
 brew upgrade --cask cloudflare-status-bar
 ```
 
+## Release Signing and Notarization
+
+Homebrew cask installs are quarantined by macOS, so release zip assets must contain a Developer ID signed and notarized app. Ad-hoc signed builds will verify with `codesign`, but Gatekeeper will reject them after download.
+
+### Local release build
+
+```bash
+export TEAM_ID="3LD9A48W2C"
+export NOTARY_KEYCHAIN_PROFILE="cloudflare-status-bar"
+scripts/build_release.sh
+```
+
+Alternatively, set `APPLE_ID` and `APP_SPECIFIC_PASSWORD` instead of `NOTARY_KEYCHAIN_PROFILE`. The script writes `dist/CloudflareStatusBar-<version>.zip`, staples the notarization ticket, runs Gatekeeper assessment, and prints the sha256 for the Homebrew cask.
+
+For App Store Connect API key notarization, set `ASC_KEY_PATH`, `ASC_KEY_ID`, and `ASC_ISSUER_ID`.
+
+### GitHub Actions release build
+
+The `Release signed macOS app` workflow runs for `v*` tags and can also be run manually for an existing tag. Configure these repository secrets before using it:
+
+- `BUILD_CERTIFICATE_BASE64` - Base64-encoded Developer ID Application `.p12`
+- `P12_PASSWORD` - Password for the exported `.p12`
+- `KEYCHAIN_PASSWORD` - Temporary CI keychain password
+- `APPLE_TEAM_ID` - Apple Developer Team ID, for example `3LD9A48W2C`
+- `APPLE_ID` - Apple ID used for notarization, when using app-specific password auth
+- `APP_SPECIFIC_PASSWORD` - App-specific password for notarization
+- `APP_STORE_CONNECT_API_KEY_BASE64` - Base64-encoded App Store Connect `.p8`, when using API key auth instead of app-specific password auth
+- `APP_STORE_CONNECT_KEY_ID` - App Store Connect API key id
+- `APP_STORE_CONNECT_ISSUER_ID` - App Store Connect issuer id, required for API key auth
+- `SIGNING_IDENTITY` - Optional; defaults to `Developer ID Application`
+- `HOMEBREW_TAP_TOKEN` - Optional token with push access to `sushaantu/homebrew-cloudflare-status-bar`
+
+To repair a bad existing release asset, run the workflow manually for that tag, for example `v1.6.1`, with cask updating enabled. If the cask token is not configured, update `Casks/cloudflare-status-bar.rb` in the tap with the sha256 printed by the workflow. For normal releases, tag a new version and let the workflow upload the notarized zip and update the cask.
+
 ## Requirements
 
 - macOS 13.0 (Ventura) or later
