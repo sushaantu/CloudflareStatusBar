@@ -24,9 +24,11 @@ if [[ -z "$SHA256" ]]; then
   SHA256="$(shasum -a 256 "$ZIP_PATH" | awk '{ print $1 }')"
 fi
 
-WORK_ROOT="${RUNNER_TEMP:-}"
-if [[ -z "$WORK_ROOT" ]]; then
+if [[ -z "${RUNNER_TEMP:-}" ]]; then
   WORK_ROOT="$(mktemp -d)"
+  trap 'rm -rf "$WORK_ROOT"' EXIT
+else
+  WORK_ROOT="$RUNNER_TEMP"
 fi
 TAP_DIR="$WORK_ROOT/homebrew-cloudflare-status-bar"
 

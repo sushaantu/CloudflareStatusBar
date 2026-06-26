@@ -63,8 +63,8 @@ jobs:
             fi
           done
           if [[ -z "$APPLE_ID" || -z "$APP_SPECIFIC_PASSWORD" ]]; then
-            if [[ -z "$APP_STORE_CONNECT_API_KEY_BASE64" || -z "$APP_STORE_CONNECT_KEY_ID" ]]; then
-              echo "::error::Set APPLE_ID + APP_SPECIFIC_PASSWORD, or APP_STORE_CONNECT_API_KEY_BASE64 + APP_STORE_CONNECT_KEY_ID (+ APP_STORE_CONNECT_ISSUER_ID for team keys)."
+            if [[ -z "$APP_STORE_CONNECT_API_KEY_BASE64" || -z "$APP_STORE_CONNECT_KEY_ID" || -z "$APP_STORE_CONNECT_ISSUER_ID" ]]; then
+              echo "::error::Set APPLE_ID + APP_SPECIFIC_PASSWORD, or APP_STORE_CONNECT_API_KEY_BASE64 + APP_STORE_CONNECT_KEY_ID + APP_STORE_CONNECT_ISSUER_ID."
               missing=1
             fi
           fi

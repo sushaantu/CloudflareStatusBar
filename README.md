@@ -84,7 +84,7 @@ scripts/build_release.sh
 
 Alternatively, set `APPLE_ID` and `APP_SPECIFIC_PASSWORD` instead of `NOTARY_KEYCHAIN_PROFILE`. The script writes `dist/CloudflareStatusBar-<version>.zip`, staples the notarization ticket, runs Gatekeeper assessment, and prints the sha256 for the Homebrew cask.
 
-For App Store Connect API key notarization, set `ASC_KEY_PATH` and `ASC_KEY_ID`; set `ASC_ISSUER_ID` too when using a team key.
+For App Store Connect API key notarization, set `ASC_KEY_PATH`, `ASC_KEY_ID`, and `ASC_ISSUER_ID`.
 
 ### GitHub Actions release build
 
@@ -98,7 +98,7 @@ The `Release signed macOS app` workflow runs for `v*` tags and can also be run m
 - `APP_SPECIFIC_PASSWORD` - App-specific password for notarization
 - `APP_STORE_CONNECT_API_KEY_BASE64` - Base64-encoded App Store Connect `.p8`, when using API key auth instead of app-specific password auth
 - `APP_STORE_CONNECT_KEY_ID` - App Store Connect API key id
-- `APP_STORE_CONNECT_ISSUER_ID` - App Store Connect issuer id, required for team keys
+- `APP_STORE_CONNECT_ISSUER_ID` - App Store Connect issuer id, required for API key auth
 - `SIGNING_IDENTITY` - Optional; defaults to `Developer ID Application`
 - `HOMEBREW_TAP_TOKEN` - Optional token with push access to `sushaantu/homebrew-cloudflare-status-bar`
 

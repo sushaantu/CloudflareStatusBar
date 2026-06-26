@@ -24,17 +24,22 @@ require_cmd shasum
 
 VERSION="${VERSION:-}"
 if [[ -z "$VERSION" ]]; then
-  if git describe --tags --exact-match >/dev/null 2>&1; then
-    VERSION="$(git describe --tags --exact-match | sed 's/^v//')"
+  if TAG="$(git describe --tags --exact-match 2>/dev/null)"; then
+    VERSION="${TAG#v}"
   else
     VERSION="$(
       xcodebuild -showBuildSettings \
         -project "$PROJECT" \
         -scheme "$SCHEME" \
         -configuration "$CONFIGURATION" 2>/dev/null |
-        awk -F'= ' '/MARKETING_VERSION/ { print $2; exit }'
+        awk '/MARKETING_VERSION/ { print $3; exit }'
     )"
   fi
+fi
+
+if [[ -z "$VERSION" ]]; then
+  echo "error: failed to determine VERSION" >&2
+  exit 1
 fi
 
 TEAM_ID="${TEAM_ID:-}"
@@ -110,14 +115,19 @@ else
     key_path="${ASC_KEY_PATH:-${APP_STORE_CONNECT_API_KEY_PATH:-}}"
     key_id="${ASC_KEY_ID:-${APP_STORE_CONNECT_KEY_ID:-}}"
     issuer_id="${ASC_ISSUER_ID:-${APP_STORE_CONNECT_ISSUER_ID:-}}"
+    if [[ ! -f "$key_path" ]]; then
+      echo "error: API key file not found at $key_path" >&2
+      exit 1
+    fi
     if [[ -z "$key_id" ]]; then
       echo "error: set ASC_KEY_ID or APP_STORE_CONNECT_KEY_ID for API key notarization" >&2
       exit 1
     fi
-    notary_args=(--key "$key_path" --key-id "$key_id")
-    if [[ -n "$issuer_id" ]]; then
-      notary_args+=(--issuer "$issuer_id")
+    if [[ -z "$issuer_id" ]]; then
+      echo "error: set ASC_ISSUER_ID or APP_STORE_CONNECT_ISSUER_ID for API key notarization" >&2
+      exit 1
     fi
+    notary_args=(--key "$key_path" --key-id "$key_id" --issuer "$issuer_id")
   else
     if [[ -z "${APPLE_ID:-}" || -z "${APP_SPECIFIC_PASSWORD:-}" ]]; then
       echo "error: set NOTARY_KEYCHAIN_PROFILE, App Store Connect API key vars, or APPLE_ID and APP_SPECIFIC_PASSWORD for notarization" >&2
