@@ -13,6 +13,11 @@ if [[ -z "$VERSION" ]]; then
   exit 1
 fi
 
+if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  echo "error: VERSION must match MAJOR.MINOR.PATCH, for example 1.6.1" >&2
+  exit 1
+fi
+
 if [[ -z "$SHA256" ]]; then
   if [[ -z "$ZIP_PATH" ]]; then
     ZIP_PATH="dist/$APP_NAME-$VERSION.zip"
@@ -23,6 +28,12 @@ if [[ -z "$SHA256" ]]; then
   fi
   SHA256="$(shasum -a 256 "$ZIP_PATH" | awk '{ print $1 }')"
 fi
+
+if [[ ! "$SHA256" =~ ^[0-9a-fA-F]{64}$ ]]; then
+  echo "error: SHA256 must be a 64-character hexadecimal digest" >&2
+  exit 1
+fi
+SHA256="$(printf '%s' "$SHA256" | tr '[:upper:]' '[:lower:]')"
 
 if [[ -z "${RUNNER_TEMP:-}" ]]; then
   WORK_ROOT="$(mktemp -d)"
@@ -49,9 +60,29 @@ if [[ ! -f "$CASK_FILE" ]]; then
 fi
 
 VERSION="$VERSION" SHA256="$SHA256" ruby -0pi -e '
-  gsub(/version "[^"]+"/, "version \"#{ENV.fetch("VERSION")}\"")
-  gsub(/sha256 "[^"]+"/, "sha256 \"#{ENV.fetch("SHA256")}\"")
+  version = ENV.fetch("VERSION")
+  sha256 = ENV.fetch("SHA256")
+  unless version.match?(/\A[0-9]+\.[0-9]+\.[0-9]+\z/)
+    abort "error: invalid VERSION"
+  end
+  unless sha256.match?(/\A[0-9a-f]{64}\z/)
+    abort "error: invalid SHA256"
+  end
+  gsub(/version "[^"]+"/, "version #{version.inspect}")
+  gsub(/sha256 "[^"]+"/, "sha256 #{sha256.inspect}")
 ' "$CASK_FILE"
+
+ruby -c "$CASK_FILE" >/dev/null
+if command -v brew >/dev/null 2>&1; then
+  if ! brew audit --cask "$CASK_FILE"; then
+    if [[ "${REQUIRE_BREW_AUDIT:-0}" == "1" ]]; then
+      exit 1
+    fi
+    echo "warning: brew audit failed; continuing because REQUIRE_BREW_AUDIT is not set" >&2
+  fi
+else
+  echo "warning: brew not found; skipping cask audit" >&2
+fi
 
 if git diff --quiet -- "$CASK_FILE"; then
   echo "Homebrew cask already points at $VERSION ($SHA256)"
