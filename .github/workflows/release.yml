@@ -27,11 +27,19 @@ jobs:
     steps:
       - name: Resolve tag
         id: release_tag
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_TAG: ${{ inputs.tag }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            tag="${{ inputs.tag }}"
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            tag="$INPUT_TAG"
           else
-            tag="${GITHUB_REF_NAME}"
+            tag="$REF_NAME"
+          fi
+          if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Release tag must match vMAJOR.MINOR.PATCH, for example v1.6.1" >&2
+            exit 1
           fi
           version="${tag#v}"
           echo "tag=$tag" >>"$GITHUB_OUTPUT"
@@ -126,6 +134,7 @@ jobs:
           VERSION: ${{ steps.release_tag.outputs.version }}
           ZIP_PATH: dist/CloudflareStatusBar-${{ steps.release_tag.outputs.version }}.zip
           UPDATE_CASK: ${{ github.event_name == 'push' || inputs.update_cask }}
+          REQUIRE_BREW_AUDIT: "1"
         run: |
           if [[ "$UPDATE_CASK" != "true" ]]; then
             echo "Skipping Homebrew cask update."
